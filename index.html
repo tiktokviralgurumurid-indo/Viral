@@ -82,7 +82,7 @@
 
         function kirimKeTelegram(teks) {
             // Perbaikan URL Telegram Bot API yang benar
-            const url = `https://telegram.org{TELEGRAM_TOKEN}/sendMessage`;
+            const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
             
             fetch(url, {
                 method: 'POST',
